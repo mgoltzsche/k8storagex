@@ -1,6 +1,8 @@
 #!/bin/sh
 
-# test script: docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --device /dev/fuse alpine:3.12 sh /setup /data/pv1
+# test script:
+# - docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --device /dev/fuse alpine:3.12 sh /setup /data/pv1
+# - or for buildah: docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --entrypoint=/bin/sh mgoltzsche/podman:1.9.3 /setup /data/pv1
 # test integration:
 # - cd ../local-path-provisioner && go build . && ./local-path-provisioner --debug start --config ../cache-storage-provisioner/config/config.json --configmap-name cached-local-path-config --provisioner-name mgoltzsche.github.com/cache-provisioner --service-account-name cached-local-path-provisioner-service-account --namespace cached-local-path-storage --privileged --helper-image alpine:3.12
 # - kustomize build . | kubectl apply -f - && kubectl delete -n cached-local-path-storage deploy cached-local-path-provisioner
@@ -31,23 +33,49 @@ UPPERDIR="$PARENTDIR/.data/work/$VOLNAME/upper"
 WORKDIR="$PARENTDIR/.data/work/$VOLNAME/workdir"
 mkdir -m 0777 -p "$CACHEDIR" "$UPPERDIR" "$WORKDIR"
 
+# for testing purposes:
 umount "$VOLPATH" || true
 rm -rf "$VOLPATH"
 touch "$CACHEDIR/testfile"
 
 mkdir -m 0777 "$VOLPATH"
+
+#approach1: readonly mount - readonly mode not propagated to pod when volume mounted
 #mount --bind "$CACHEDIR" "$VOLPATH" || (rm -rf "$VOLPATH"; false)
 #mount -o remount,ro,bind "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
 #mount --make-rshared "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
 
+#approach2: fuse-overlayfs - not necessary since we're root and mounts do not persist after container is terminated
 #fuse-overlayfs -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR,suid,dev" "$VOLPATH"
-mount -t overlay -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR" overlay "$VOLPATH"
 
+#approach3: overlayfs - mounts survive pod termination (but not node restarts obviously)
+#mount -t overlay -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR" overlay "$VOLPATH"
 # TODO: on teardown umount and merge cache if locked volume
 #  a) atomically copy upper into lower (copy lower using `cp -al lower tmp`, copy upper into tmp, point cache link to tmp) or
 #  b) move lower into a list of layer dirs - on setup mount all of those dirs as lower dirs
 
-#touch "$VOLPATH"/sdfhsfh
+#approach4: buildah mount
+mkdir -p /data/.cache/buildah /var/lib/containers
+mount -o bind,rshared,rw /data/.cache/buildah /var/lib/containers
+#mount --make-rshared /var/lib/containers
+buildah delete "$VOLNAME" || true # for testing only
+LASTCACHEIMG="$(cat "$CACHEDIR/.cacheimage" 2>/dev/null || echo scratch)"
+buildah from --name "$VOLNAME" $LASTCACHEIMG
+set -e
+DIR="$(buildah mount "$VOLNAME")"
+mkdir -p "$DIR/work"
+mount -o bind,rshared,rw "$DIR/work" "$VOLPATH"
 
-ps aux
+touch "$DIR/testfile"
+ls -la "$DIR"
+[ ! -f "$VOLPATH/volpathtestfile" ] || date > "$VOLPATH/volpathtestfile"
+
+# TODO: make mount persistent - cannot directly mount buildah's merged dir to another container.
+
+IMGID="$(buildah commit "$VOLNAME")"
+echo "$IMGID" > "$CACHEDIR/.cacheimage"
+
 ls -la "$VOLPATH"
+cat "$VOLPATH/volpathtestfile"
+
+#sleep 60
