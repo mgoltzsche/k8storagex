@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: caching-build
+  labels:
+    buildname: buildx
+spec:
+  restartPolicy: Never
+  containers:
+  - name: sync
+    image: alpine:3.12
+    args: ["/bin/sh", "-c", "echo hello1 && echo cachevalue > /cache/file && sleep 120"]
+    volumeMounts:
+    - mountPath: "/cache"
+      name: cache
+  volumes:
+  - name: cache
+    persistentVolumeClaim:
+      claimName: build-cache
+  affinity:
+    nodeAffinity:
+      # pod SHOULD run on particular node
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            # here a group of build nodes would be specified by label
+            - kube-master
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: build-cache
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: cached-local-path
+#  selector: 
+#    matchLabels: 
+#      cache-group: default

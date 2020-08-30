@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# test script: docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --device /dev/fuse alpine:3.12 sh /setup /data/pv1
+# test integration:
+# - cd ../local-path-provisioner && go build . && ./local-path-provisioner --debug start --config ../cache-storage-provisioner/config/config.json --configmap-name cached-local-path-config --provisioner-name mgoltzsche.github.com/cache-provisioner --service-account-name cached-local-path-provisioner-service-account --namespace cached-local-path-storage --privileged --helper-image alpine:3.12
+# - kustomize build . | kubectl apply -f - && kubectl delete -n cached-local-path-storage deploy cached-local-path-provisioner
+# - kubectl apply -f test.yaml
+
+set -ex
+
+VOLPATH="$1"
+PARENTDIR="$(dirname "$VOLPATH")"
+
+#if [ ! "$2" = "chrooted" ]; then
+#	HOSTVOLPATH="$(echo "$VOLPATH" | sed -E 's/^\/data\//\//')"
+#	HOSTPARENTDIR="$(dirname "$HOSTVOLPATH")"
+#	mkdir -m 0755 -p "$PARENTDIR/.script"
+#	TMPSCRIPT="$(mktemp -p "$PARENTDIR/.script")"
+#	cp -f "$0" "$TMPSCRIPT" || (rm "$TMPSCRIPT"; false)
+#	SCRIPTNAME="$(basename "$0")"
+#	mv "$TMPSCRIPT" "$PARENTDIR/.script/$SCRIPTNAME"
+#	chroot /data /bin/sh "$HOSTPARENTDIR/.script/$SCRIPTNAME" "$HOSTVOLPATH" "chrooted"
+#	exit 0
+#fi
+
+VOLNAME="$(basename "$VOLPATH")"
+
+CACHE=cache
+CACHEDIR="$PARENTDIR/.data/cache/$CACHE"
+UPPERDIR="$PARENTDIR/.data/work/$VOLNAME/upper"
+WORKDIR="$PARENTDIR/.data/work/$VOLNAME/workdir"
+mkdir -m 0777 -p "$CACHEDIR" "$UPPERDIR" "$WORKDIR"
+
+umount "$VOLPATH" || true
+rm -rf "$VOLPATH"
+touch "$CACHEDIR/testfile"
+
+mkdir -m 0777 "$VOLPATH"
+#mount --bind "$CACHEDIR" "$VOLPATH" || (rm -rf "$VOLPATH"; false)
+#mount -o remount,ro,bind "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
+#mount --make-rshared "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
+
+#fuse-overlayfs -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR,suid,dev" "$VOLPATH"
+mount -t overlay -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR" overlay "$VOLPATH"
+
+# TODO: on teardown umount and merge cache if locked volume
+#  a) atomically copy upper into lower (copy lower using `cp -al lower tmp`, copy upper into tmp, point cache link to tmp) or
+#  b) move lower into a list of layer dirs - on setup mount all of those dirs as lower dirs
+
+#touch "$VOLPATH"/sdfhsfh
+
+ps aux
+ls -la "$VOLPATH"

@@ -1,0 +1,21 @@
+namespace: cached-local-path-storage
+namePrefix: cached-
+
+resources:
+- github.com/rancher/local-path-provisioner/deploy?ref=v0.0.17
+
+patchesStrategicMerge:
+- operator-patch.yaml
+- storageclass-patch.yaml
+
+configMapGenerator:
+- name: local-path-config
+  namespace: local-path-storage
+  behavior: replace
+  files:
+  - config/config.json
+  - config/setup
+  - config/teardown
+
+generatorOptions:
+  disableNameSuffixHash: true

@@ -1,0 +1,7 @@
+#!/bin/sh
+VOLPATH="$1"
+PARENTDIR="$(dirname "$VOLPATH")"
+VOLNAME="$(basename "$VOLPATH")"
+
+umount "$VOLPATH"
+rm -rf "$VOLPATH" "$PARENTDIR/.data/work/$VOLNAME"

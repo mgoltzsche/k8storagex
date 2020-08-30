@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: local-path-provisioner
+  namespace: local-path-storage
+spec:
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      containers:
+      - name: local-path-provisioner
+        image: rancher/local-path-provisioner:v0.0.17-privileged-patch
+        imagePullPolicy: IfNotPresent
+        command:
+        - local-path-provisioner
+        - --debug
+        - start
+        - --config
+        - /etc/config/config.json
+        - --configmap-name
+        - cached-local-path-config
+        - --provisioner-name
+        - mgoltzsche.github.com/cache-provisioner
+        - --service-account-name
+        - cached-local-path-provisioner-service-account
+        - --helper-image
+        - alpine:3.12
+        - --privileged
