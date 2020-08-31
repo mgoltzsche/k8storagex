@@ -1,7 +1,41 @@
 #!/bin/sh
+
+# START: same as in setup
 VOLPATH="$1"
 PARENTDIR="$(dirname "$VOLPATH")"
 VOLNAME="$(basename "$VOLPATH")"
+CACHE_KEY="cache" # TODO: set dynamically
+CACHE_KEY_DIR=/data/.cache/keys
+CACHE_KEY_POINTER="$CACHE_KEY_DIR/$CACHE_KEY.latest"
 
+cat - > /etc/containers/containers.conf <<-EOF
+	[engine]
+	cgroup_manager = "cgroupfs"
+	events_logger = "file"
+	static_dir = "/data/.cache/containers/storage/libpod"
+	volume_path = "/data/.cache/containers/storage/volumes"
+EOF
+cat - > /etc/containers/storage.conf <<-EOF
+	[storage]
+	graphroot = "/data/.cache/containers/storage"
+	driver = "overlay"
+EOF
+# END: same as in setup
+
+set -x
+
+# Commit volume / container as latest cache key
+IMGID="$(buildah commit "$VOLNAME")" && (
+	set -e
+	mkdir -p $CACHE_KEY_DIR
+	TMPFILE=$(mktemp -p $CACHE_KEY_DIR)
+	echo "$IMGID" > $TMPFILE && mv $TMPFILE "$CACHE_KEY_POINTER" \
+		|| (rm -f $TMPFILE; false)
+	# TODO: push latest cache image to registry
+)
+
+# Delete volume / container
 umount "$VOLPATH"
-rm -rf "$VOLPATH" "$PARENTDIR/.data/work/$VOLNAME"
+buildah umount "$VOLNAME"
+buildah delete "$VOLNAME"
+rm -rf "$VOLPATH"

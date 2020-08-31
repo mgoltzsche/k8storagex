@@ -12,6 +12,12 @@ set -ex
 
 VOLPATH="$1"
 PARENTDIR="$(dirname "$VOLPATH")"
+VOLNAME="$(basename "$VOLPATH")"
+CACHE_KEY="cache" # TODO: set dynamically
+CACHE_KEY_DIR=/data/.cache/keys
+CACHE_KEY_POINTER="$CACHE_KEY_DIR/$CACHE_KEY.latest"
+
+mkdir -p $CACHE_KEY_DIR
 
 #if [ ! "$2" = "chrooted" ]; then
 #	HOSTVOLPATH="$(echo "$VOLPATH" | sed -E 's/^\/data\//\//')"
@@ -25,57 +31,79 @@ PARENTDIR="$(dirname "$VOLPATH")"
 #	exit 0
 #fi
 
-VOLNAME="$(basename "$VOLPATH")"
-
-CACHE=cache
-CACHEDIR="$PARENTDIR/.data/cache/$CACHE"
-UPPERDIR="$PARENTDIR/.data/work/$VOLNAME/upper"
-WORKDIR="$PARENTDIR/.data/work/$VOLNAME/workdir"
-mkdir -m 0777 -p "$CACHEDIR" "$UPPERDIR" "$WORKDIR"
+# for overlayfs approach:
+CACHEDIR="$PARENTDIR/.data/cache/$CACHE_KEY"
+#UPPERDIR="$PARENTDIR/.data/work/$VOLNAME/upper"
+#WORKDIR="$PARENTDIR/.data/work/$VOLNAME/workdir"
+#mkdir -m 0777 -p "$CACHEDIR" "$UPPERDIR" "$WORKDIR"
 
 # for testing purposes:
-umount "$VOLPATH" || true
-rm -rf "$VOLPATH"
-touch "$CACHEDIR/testfile"
+#umount "$VOLPATH" || true
+#rm -rf "$VOLPATH"
 
 mkdir -m 0777 "$VOLPATH"
+(
+	set -e
+	#approach1: readonly mount - readonly mode not propagated to pod when volume mounted
+	#mount --bind "$CACHEDIR" "$VOLPATH" || (rm -rf "$VOLPATH"; false)
+	#mount -o remount,ro,bind "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
+	#mount --make-rshared "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
+	
+	#approach2: fuse-overlayfs - not necessary since we're root and mounts do not persist after container is terminated
+	#fuse-overlayfs -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR,suid,dev" "$VOLPATH"
+	
+	#approach3: overlayfs - mounts survive pod termination (but not node restarts obviously)
+	#mount -t overlay -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR" overlay "$VOLPATH"
+	# TODO: on teardown umount and merge cache if locked volume
+	#  a) atomically copy upper into lower (copy lower using `cp -al lower tmp`, copy upper into tmp, point cache link to tmp) or
+	#  b) move lower into a list of layer dirs - on setup mount all of those dirs as lower dirs
 
-#approach1: readonly mount - readonly mode not propagated to pod when volume mounted
-#mount --bind "$CACHEDIR" "$VOLPATH" || (rm -rf "$VOLPATH"; false)
-#mount -o remount,ro,bind "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
-#mount --make-rshared "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
 
-#approach2: fuse-overlayfs - not necessary since we're root and mounts do not persist after container is terminated
-#fuse-overlayfs -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR,suid,dev" "$VOLPATH"
+	#
+	#approach4: buildah mount
+	#
 
-#approach3: overlayfs - mounts survive pod termination (but not node restarts obviously)
-#mount -t overlay -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR" overlay "$VOLPATH"
-# TODO: on teardown umount and merge cache if locked volume
-#  a) atomically copy upper into lower (copy lower using `cp -al lower tmp`, copy upper into tmp, point cache link to tmp) or
-#  b) move lower into a list of layer dirs - on setup mount all of those dirs as lower dirs
+	mkdir -p /data/.cache/containers
+	cat - > /etc/containers/containers.conf <<-EOF
+		[engine]
+		cgroup_manager = "cgroupfs"
+		events_logger = "file"
+		static_dir = "/data/.cache/containers/storage/libpod"
+		volume_path = "/data/.cache/containers/storage/volumes"
+	EOF
+	cat - > /etc/containers/storage.conf <<-EOF
+		[storage]
+		graphroot = "/data/.cache/containers/storage"
+		driver = "overlay"
+	EOF
 
-#approach4: buildah mount
-mkdir -p /data/.cache/buildah /var/lib/containers
-mount -o bind,rshared,rw /data/.cache/buildah /var/lib/containers
-#mount --make-rshared /var/lib/containers
-buildah delete "$VOLNAME" || true # for testing only
-LASTCACHEIMG="$(cat "$CACHEDIR/.cacheimage" 2>/dev/null || echo scratch)"
-buildah from --name "$VOLNAME" $LASTCACHEIMG
-set -e
-DIR="$(buildah mount "$VOLNAME")"
-mkdir -p "$DIR/work"
-mount -o bind,rshared,rw "$DIR/work" "$VOLPATH"
+	# Create new volume from cache key's latest container image
+	#buildah delete "$VOLNAME" || true # for testing only
+	LATESTIMG="$(cat "$CACHE_KEY_POINTER" 2>/dev/null || echo scratch)"
+	buildah from --name "$VOLNAME" $LATESTIMG
+	CONTAINERDIR="$(buildah mount "$VOLNAME")"
+	mount -o bind,rshared "$CONTAINERDIR" "$VOLPATH"
 
-touch "$DIR/testfile"
-ls -la "$DIR"
-[ ! -f "$VOLPATH/volpathtestfile" ] || date > "$VOLPATH/volpathtestfile"
+	[ -f "$VOLPATH/volpathtestfile" ] || date > "$VOLPATH/volpathtestfile"
 
-# TODO: make mount persistent - cannot directly mount buildah's merged dir to another container.
+	#IMGID="$(buildah commit "$VOLNAME")"
+	#echo "$IMGID" > "$CACHEDIR/.cacheimage"
 
-IMGID="$(buildah commit "$VOLNAME")"
-echo "$IMGID" > "$CACHEDIR/.cacheimage"
+	#ls -la "$VOLPATH"
+	#cat "$VOLPATH/volpathtestfile"
 
-ls -la "$VOLPATH"
-cat "$VOLPATH/volpathtestfile"
+	#buildah delete testcontainer || true
+	#buildah from --name testcontainer "$IMGID"
+	#CONTAINERDIR="$(buildah mount testcontainer)"
+	#ls -la "$CONTAINERDIR"
+	#cat "$CONTAINERDIR/volpathtestfile"
+	#buildah delete testcontainer || true
 
-#sleep 60
+	#sleep 60
+) || (
+	umount "$VOLPATH" 2>/dev/null
+	buildah umount "$VOLNAME" 2>/dev/null
+	buildah delete "$VOLNAME" 2>/dev/null
+	rm -rf "$VOLPATH"
+	false
+)

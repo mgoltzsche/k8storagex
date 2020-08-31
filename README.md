@@ -1,12 +1,14 @@
-# cachepv
+# jobcachefs
 
 Aims to manage distributed caches similar to container images (early development).  
 
-This project provisions `PersistentVolume`s that can be used as fast cache
-for (build) jobs in Kubernetes.
-Based on [local-path-provisioner](https://github.com/rancher/local-path-provisioner)
-it provides custom `setup` and `teardown` scripts to set up and synchronize caches
-using overlayfs (and maybe optionally some day also a docker registry).
+This project provisions `PersistentVolume`s that can be used as
+a fast and simple cache for (build) jobs in Kubernetes.
+It provides custom `setup` and `teardown` scripts for 
+[rancher/local-path-provisioner](https://github.com/rancher/local-path-provisioner)
+to set up and synchronize caches on PV creation and deletion using
+[buildah](https://github.com/containers/buildah)
+(and maybe optionally some day also a docker registry).
 
 ## Motivation
 
@@ -45,8 +47,8 @@ and isolated with the help of overlayfs using the shared cache as lower layer
 and a separate dir per `PersistentVolume` as upper layer (like docker's image layer fs).  
 
 The cache name as well as eligibility to write the master cache could be
-specified as PVC annotations. Distinction between builds that can use the cache
-and builds that can write the shared cache is necessary at least in OpenSource
+specified as PVC annotations. Distinction between builds that can read and
+builds that can write the shared cache is necessary at least in OpenSource
 projects where a PR build could inject malware into regular releases
 by manipulating the shared cache.  
 
@@ -60,16 +62,18 @@ for the build and delete it afterwards.
 ## Roadmap
 
 Node local cache synchronization:
-* Make `local-path-provisioner` support privileged helper pod.
-* Prepare separate binary/container image to be used as `local-path-provisioner` helper.
-* Mark/lock a single `PersistentVolume` per cache name and node as master for that cache name.
-* Make `local-path-provisioner` pass through PVC/SC/Volume annotations to helper pod as env vars.
-* Support `PersistentVolumeClaim` annotation to allow writing a cache name after volume deletion.
-* When a `PersistentVolume` that is cache name master is deleted atomically apply its contents to the shared cache name (merge upper and lower dir in a separate directory or use existing container/storage tooling from the start? - lower dir contents copied as hardlinks, upper dir contents moved to new dir while deleting existing hardlinks, pointing to new directory as new cache master).
+* Make `rancher/local-path-provisioner` support privileged helper pod.
+* Make `rancher/local-path-provisioner` pass through PVC/SC/Volume annotations to helper pod as env vars.
+* Prepare separate container image to be used as `local-path-provisioner` helper.
+* Support `PersistentVolumeClaim` annotation to specify the cache name.
+* Support `PersistentVolumeClaim` annotation to allow publication/reusage as shared cache after volume deletion.
 
 Distributed cache synchronization:
-* On every creation of a master `PersistentVolume` pull the cache name's latest image from the docker registry (impacts build duration but only for the cache delta - to avoid that pods could have affinity to a group of nodes and/or be sticky to a particular node using preferred nodeAffinity on a project basis).
-* When writing the node-locally shared cache name after master volume deletion build a new image from it and push it to the registry (doesn't impact build duration since it happens after the pod has been terminated).
+* Mark/lock a single `PersistentVolume` per cache name and node as master for that cache name (for push afterwards).
+* On every creation of a (master) `PersistentVolume` pull the cache name's latest image from the docker registry (impacts build duration but only for the delta layers - to avoid that pods could have affinity to a group of nodes and/or be sticky to a particular node using preferred nodeAffinity on a project basis).
+* When writing the node-locally shared cache name after master volume deletion
+  push the resulting image to the registry
+  (doesn't impact build duration since it happens after the pod has been terminated).
 
 Quota constraint support:
 * Optionally manage each cache name within a separate, mounted raw image file of a given size.
