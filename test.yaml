@@ -9,7 +9,7 @@ spec:
   containers:
   - name: sync
     image: alpine:3.12
-    args: ["/bin/sh", "-c", "echo hello1 && echo cachevalue > /cache/file && sleep 120"]
+    args: ["/bin/sh", "-c", "echo hello1 && ([ -f /cache/date ] || date > /cache/date) && cat /cache/date && sleep 120"]
     volumeMounts:
     - mountPath: "/cache"
       name: cache

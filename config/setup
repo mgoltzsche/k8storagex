@@ -4,8 +4,8 @@
 # - docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --device /dev/fuse alpine:3.12 sh /setup /data/pv1
 # - or for buildah: docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --entrypoint=/bin/sh mgoltzsche/podman:1.9.3 /setup /data/pv1
 # test integration:
-# - cd ../local-path-provisioner && go build . && ./local-path-provisioner --debug start --config ../cache-storage-provisioner/config/config.json --configmap-name cached-local-path-config --provisioner-name mgoltzsche.github.com/cache-provisioner --service-account-name cached-local-path-provisioner-service-account --namespace cached-local-path-storage --privileged --helper-image alpine:3.12
 # - kustomize build . | kubectl apply -f - && kubectl delete -n cached-local-path-storage deploy cached-local-path-provisioner
+# - cd ../local-path-provisioner && go build . && ./local-path-provisioner --debug start --config ../jobcachefs/config/config.json --configmap-name cached-local-path-config --provisioner-name mgoltzsche.github.com/cache-provisioner --service-account-name cached-local-path-provisioner-service-account --namespace cached-local-path-storage --privileged --helper-image mgoltzsche/podman:1.9.3
 # - kubectl apply -f test.yaml
 
 set -ex
@@ -18,51 +18,9 @@ CACHE_KEY_DIR=/data/.cache/keys
 CACHE_KEY_POINTER="$CACHE_KEY_DIR/$CACHE_KEY.latest"
 
 mkdir -p $CACHE_KEY_DIR
-
-#if [ ! "$2" = "chrooted" ]; then
-#	HOSTVOLPATH="$(echo "$VOLPATH" | sed -E 's/^\/data\//\//')"
-#	HOSTPARENTDIR="$(dirname "$HOSTVOLPATH")"
-#	mkdir -m 0755 -p "$PARENTDIR/.script"
-#	TMPSCRIPT="$(mktemp -p "$PARENTDIR/.script")"
-#	cp -f "$0" "$TMPSCRIPT" || (rm "$TMPSCRIPT"; false)
-#	SCRIPTNAME="$(basename "$0")"
-#	mv "$TMPSCRIPT" "$PARENTDIR/.script/$SCRIPTNAME"
-#	chroot /data /bin/sh "$HOSTPARENTDIR/.script/$SCRIPTNAME" "$HOSTVOLPATH" "chrooted"
-#	exit 0
-#fi
-
-# for overlayfs approach:
-CACHEDIR="$PARENTDIR/.data/cache/$CACHE_KEY"
-#UPPERDIR="$PARENTDIR/.data/work/$VOLNAME/upper"
-#WORKDIR="$PARENTDIR/.data/work/$VOLNAME/workdir"
-#mkdir -m 0777 -p "$CACHEDIR" "$UPPERDIR" "$WORKDIR"
-
-# for testing purposes:
-#umount "$VOLPATH" || true
-#rm -rf "$VOLPATH"
-
 mkdir -m 0777 "$VOLPATH"
 (
 	set -e
-	#approach1: readonly mount - readonly mode not propagated to pod when volume mounted
-	#mount --bind "$CACHEDIR" "$VOLPATH" || (rm -rf "$VOLPATH"; false)
-	#mount -o remount,ro,bind "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
-	#mount --make-rshared "$VOLPATH" || (umount "$VOLPATH"; rm -rf "$VOLPATH"; false)
-	
-	#approach2: fuse-overlayfs - not necessary since we're root and mounts do not persist after container is terminated
-	#fuse-overlayfs -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR,suid,dev" "$VOLPATH"
-	
-	#approach3: overlayfs - mounts survive pod termination (but not node restarts obviously)
-	#mount -t overlay -o "lowerdir=$CACHEDIR,upperdir=$UPPERDIR,workdir=$WORKDIR" overlay "$VOLPATH"
-	# TODO: on teardown umount and merge cache if locked volume
-	#  a) atomically copy upper into lower (copy lower using `cp -al lower tmp`, copy upper into tmp, point cache link to tmp) or
-	#  b) move lower into a list of layer dirs - on setup mount all of those dirs as lower dirs
-
-
-	#
-	#approach4: buildah mount
-	#
-
 	mkdir -p /data/.cache/containers
 	cat - > /etc/containers/containers.conf <<-EOF
 		[engine]
@@ -75,31 +33,16 @@ mkdir -m 0777 "$VOLPATH"
 		[storage]
 		graphroot = "/data/.cache/containers/storage"
 		driver = "overlay"
+		# disallow creating device nodes to avoid security risk
+		# limit container size to 10gb (supported only on xfs and btrfs)
+		mountopt = "nodev,size=10G"
 	EOF
 
 	# Create new volume from cache key's latest container image
-	#buildah delete "$VOLNAME" || true # for testing only
 	LATESTIMG="$(cat "$CACHE_KEY_POINTER" 2>/dev/null || echo scratch)"
 	buildah from --name "$VOLNAME" $LATESTIMG
 	CONTAINERDIR="$(buildah mount "$VOLNAME")"
 	mount -o bind,rshared "$CONTAINERDIR" "$VOLPATH"
-
-	[ -f "$VOLPATH/volpathtestfile" ] || date > "$VOLPATH/volpathtestfile"
-
-	#IMGID="$(buildah commit "$VOLNAME")"
-	#echo "$IMGID" > "$CACHEDIR/.cacheimage"
-
-	#ls -la "$VOLPATH"
-	#cat "$VOLPATH/volpathtestfile"
-
-	#buildah delete testcontainer || true
-	#buildah from --name testcontainer "$IMGID"
-	#CONTAINERDIR="$(buildah mount testcontainer)"
-	#ls -la "$CONTAINERDIR"
-	#cat "$CONTAINERDIR/volpathtestfile"
-	#buildah delete testcontainer || true
-
-	#sleep 60
 ) || (
 	umount "$VOLPATH" 2>/dev/null
 	buildah umount "$VOLNAME" 2>/dev/null

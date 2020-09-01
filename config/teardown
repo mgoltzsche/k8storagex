@@ -19,6 +19,7 @@ cat - > /etc/containers/storage.conf <<-EOF
 	[storage]
 	graphroot = "/data/.cache/containers/storage"
 	driver = "overlay"
+	mountopt = "nodev,size=10G"
 EOF
 # END: same as in setup
 

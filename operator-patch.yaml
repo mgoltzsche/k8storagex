@@ -10,7 +10,8 @@ spec:
     spec:
       containers:
       - name: local-path-provisioner
-        image: rancher/local-path-provisioner:v0.0.17-privileged-patch
+        image: local-path-provisioner:v0.0.17-privileged-patch
+        # patched rancher/local-path-provisioner:v0.0.17 to support --privileged option
         imagePullPolicy: IfNotPresent
         command:
         - local-path-provisioner
@@ -25,5 +26,5 @@ spec:
         - --service-account-name
         - cached-local-path-provisioner-service-account
         - --helper-image
-        - alpine:3.12
+        - mgoltzsche/podman:1.9.3
         - --privileged
