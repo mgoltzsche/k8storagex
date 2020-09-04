@@ -8,8 +8,25 @@ spec:
   restartPolicy: Never
   containers:
   - name: sync
-    image: alpine:3.12
-    args: ["/bin/sh", "-c", "echo hello1 && ([ -f /cache/date ] || date > /cache/date) && cat /cache/date && sleep 120"]
+    image: mgoltzsche/podman:2.0.4
+    args:
+    - /bin/sh
+    - -c
+    - |
+        set -ex
+        echo hello1
+        ([ -f /cache/date ] || date > /cache/date) && cat /cache/date
+        cat - > /podman/.config/containers/storage.conf <<-EOF
+          [storage]
+          graphroot = "/cache/containers"
+          driver = "overlay"
+          [storage.options.overlay]
+          mount_program = "/usr/local/bin/fuse-overlayfs"
+        EOF
+        podman run --rm alpine:3.12 echo hello from nested container || true
+        podman rm -afi --volumes
+    securityContext:
+      privileged: true
     volumeMounts:
     - mountPath: "/cache"
       name: cache

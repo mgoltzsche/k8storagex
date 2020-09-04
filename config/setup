@@ -43,6 +43,7 @@ mkdir -m 0777 "$VOLPATH"
 	buildah from --name "$VOLNAME" $LATESTIMG
 	CONTAINERDIR="$(buildah mount "$VOLNAME")"
 	mount -o bind,rshared "$CONTAINERDIR" "$VOLPATH"
+	chmod 777 "$VOLPATH"
 ) || (
 	umount "$VOLPATH" 2>/dev/null
 	buildah umount "$VOLNAME" 2>/dev/null
