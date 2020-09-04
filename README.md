@@ -30,7 +30,7 @@ when written by multiple jobs concurrently.
 Since job cache storage is a general problem that applies to most build
 pipelines in general it should be solved as an infrastructure problem rather
 than that of a particular application or pipeline.
-Doing so also allows to prevent cache synchronizations from blocking builds.
+Doing so also allows to reduce the time cache synchronizations are blocking builds.
 
 ## Idea
 
@@ -51,13 +51,13 @@ builds that can write the shared cache is necessary at least in OpenSource
 projects where a PR build could inject malware into regular releases
 by manipulating the shared cache.  
 
-Though the disadvantage of this approach is that the shared cache is only
-updated after a `PersistentVolume` is deleted which therefore must happen
-directly after each build.
-Unfortunately this is not the case in most static build pipelines.
-However such a build pipeline could dynamically spawn a separate Pod and PVC
-for the build and delete it afterwards.
-Alternatively (writing an own controller) on pod termination the PersistentVolume could be deleted.
+Though the the shared cache is only updated after a `PersistentVolume` is
+deleted which therefore must happen directly after each build but a PV cannot
+be deleted as long as a PVC/Pod is referring to it which is the case in e.g. a
+Tekton Pipeline.
+However one could write an own PV provisioning controller that,
+in addition to `rancher/local-path-provisioner`'s features, also watches the
+associated Pods and, on Pod termination (if Pod's `restartPolicy: Never`), commits the corresponding PV.
 
 ## Roadmap
 
