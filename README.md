@@ -51,15 +51,19 @@ builds that can write the shared cache is necessary at least in OpenSource
 projects where a PR build could inject malware into regular releases
 by manipulating the shared cache.  
 
-Though the the shared cache is only updated after a `PersistentVolume` is
-deleted which therefore must happen directly after each build but a PV cannot
-be deleted as long as a PVC/Pod is referring to it which is the case in e.g. a
-Tekton Pipeline.
-However one could write an own PV provisioning controller that,
-in addition to `rancher/local-path-provisioner`'s features, also watches the
-associated Pods and, on Pod termination (if Pod's `restartPolicy: Never`), commits the corresponding PV.
+Though the shared cache is only committed when a `PersistentVolume` is deleted
+which therefore must happen directly after each build but PVC/PV deletion is
+blocked by the `kubernetes.io/pvc-protection` finalizer as long as the build
+pod refers to it which is the case in e.g. a
+[Tekton Pipeline](https://github.com/tektoncd/pipeline/blob/v0.15.1/docs/pipelineruns.md#specifying-resources).
+However an additional controller could be written that watches Pods and,
+on Pod termination (if Pod's `restartPolicy: Never`), deletes the associated PVC,
+waits for it to be in `Terminating` state and remove the finalizer
+so that the corresponding PV gets committed/deleted.
 
 ## Roadmap
+
+* Write additional PVC on pod termination deleting controller
 
 Node local cache synchronization:
 * Make `rancher/local-path-provisioner` support privileged helper pod.
