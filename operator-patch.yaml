@@ -27,4 +27,4 @@ spec:
         - cached-local-path-provisioner-service-account
         - --helper-image
         - mgoltzsche/podman:1.9.3
-        - --privileged
+        - --helper-privileged

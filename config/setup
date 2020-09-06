@@ -5,7 +5,7 @@
 # - or for buildah: docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --entrypoint=/bin/sh mgoltzsche/podman:1.9.3 /setup /data/pv1
 # test integration:
 # - kustomize build . | kubectl apply -f - && kubectl delete -n cached-local-path-storage deploy cached-local-path-provisioner
-# - cd ../local-path-provisioner && go build . && ./local-path-provisioner --debug start --config ../jobcachefs/config/config.json --configmap-name cached-local-path-config --provisioner-name mgoltzsche.github.com/cache-provisioner --service-account-name cached-local-path-provisioner-service-account --namespace cached-local-path-storage --privileged --helper-image mgoltzsche/podman:1.9.3
+# - cd ../local-path-provisioner && go build . && ./local-path-provisioner --debug start --config ../jobcachefs/config/config.json --configmap-name cached-local-path-config --provisioner-name mgoltzsche.github.com/cache-provisioner --service-account-name cached-local-path-provisioner-service-account --namespace cached-local-path-storage --helper-privileged --helper-image mgoltzsche/podman:1.9.3
 # - kubectl apply -f test.yaml
 
 set -ex
