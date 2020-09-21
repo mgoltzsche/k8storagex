@@ -1,0 +1,8 @@
+#!/bin/sh
+
+VOLPATH="$1"
+VOLNAME="$(basename "$VOLPATH")"
+export ROOT_DIR="$(dirname "$VOLPATH")"
+export CACHE_DIR="$ROOT_DIR/.cache"
+
+cache-provisioner umount "$VOLNAME"

@@ -1,10 +1,10 @@
 #!/bin/sh
 
-VOLNAME=pv1
+VOLNAME=pvc-xyz_default_build-cache
 
 # ARGS: SCRIPTNAME
 runScript() {
-	./dockerizedfs.sh $1 $VOLNAME
+	./dockerized.sh $1 `pwd`/testdata $VOLNAME
 }
 
 set -ex

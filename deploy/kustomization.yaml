@@ -1,0 +1,33 @@
+namespace: cache-storage
+namePrefix: cached-
+
+resources:
+- github.com/rancher/local-path-provisioner/deploy?ref=v0.0.17
+
+patchesStrategicMerge:
+- operator-patch.yaml
+
+patchesJson6902:
+- target:
+    version: v1
+    kind: Namespace
+    name: local-path-storage
+  path: namespace-patch.yaml
+- target:
+    group: storage.k8s.io
+    version: v1
+    kind: StorageClass
+    name: local-path
+  path: storageclass-patch.yaml
+
+configMapGenerator:
+- name: local-path-config
+  namespace: local-path-storage
+  behavior: replace
+  files:
+  - config/config.json
+  - config/setup
+  - config/teardown
+
+generatorOptions:
+  disableNameSuffixHash: true
