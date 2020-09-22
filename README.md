@@ -1,4 +1,4 @@
-# jobcachefs
+# cache-provisioner
 
 A simple, fast and scalable cache for distributed (build) jobs (early development).  
 

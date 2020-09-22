@@ -3,7 +3,7 @@ IMAGE=cache-provisioner
 all: image
 
 image:
-	docker build --force-rm -t "$(IMAGE)" .
+	docker build --force-rm -t "$(IMAGE)" helper
 
 test: image
 	./test.sh

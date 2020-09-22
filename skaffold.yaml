@@ -1,6 +1,0 @@
-apiVersion: skaffold/v2alpha4
-kind: Config
-metadata:
-  name: cached-local-path-provisioner
-deploy:
-  kustomize: {}
