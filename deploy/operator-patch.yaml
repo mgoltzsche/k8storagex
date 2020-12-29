@@ -10,21 +10,13 @@ spec:
     spec:
       containers:
       - name: local-path-provisioner
-        image: local-path-provisioner:v0.0.17-privileged-patch
+        image: local-path-provisioner:v0.0.19-pod-patch
         # patched rancher/local-path-provisioner:v0.0.17 to support --privileged option
         imagePullPolicy: IfNotPresent
-        command:
-        - local-path-provisioner
-        - --debug
-        - start
-        - --config
-        - /etc/config/config.json
-        - --configmap-name
-        - cached-local-path-config
-        - --provisioner-name
-        - mgoltzsche.github.com/cache-provisioner
-        - --service-account-name
-        - cached-local-path-provisioner-service-account
-        - --helper-image
-        - mgoltzsche/podman:1.9.3
-        - --helper-privileged
+        env:
+        - name: PROVISIONER_NAME
+          value: mgoltzsche.github.com/cache-provisioner
+        - name: PVC_ANNOTATION
+          value: cache-provisioner.mgoltzsche.github.com
+        - name: PVC_ANNOTATION_REQUIRED
+          value: cache-provisioner.mgoltzsche.github.com/cache-name

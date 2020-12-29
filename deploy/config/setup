@@ -4,14 +4,14 @@
 # - docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --device /dev/fuse alpine:3.12 sh /setup /data/pv1
 # - or for buildah: docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --entrypoint=/bin/sh mgoltzsche/podman:1.9.3 /setup /data/pv1
 # test integration:
-# - kustomize build deploy | kubectl apply -f - && kubectl delete -n cache-storage deploy cached-local-path-provisioner
-# - cd ../local-path-provisioner && go build . && ./local-path-provisioner --debug start --config ../cache-provisioner/deploy/config/config.json --configmap-name cached-local-path-config --provisioner-name mgoltzsche.github.com/cache-provisioner --service-account-name cached-local-path-provisioner-service-account --namespace cache-storage --helper-privileged --helper-image mgoltzsche/podman:1.9.3
-# - cd ../pvc-remover && go build . && ./pvc-remover --storage-class cache
-# - kubectl apply -f test.yaml
+# - kustomize build deploy | kubectl apply -f - && kubectl delete -n cache-storage deploy local-path-provisioner
+# - (cd ../local-path-provisioner && go build . && ./local-path-provisioner --debug start --config ../cache-provisioner/deploy/config/config.json --configmap-name local-path-config --provisioner-name mgoltzsche.github.com/cache-provisioner --service-account-name local-path-provisioner-service-account --namespace cache-storage --pvc-annotation=cache-provisioner.mgoltzsche.github.com --pvc-annotation-required=cache-provisioner.mgoltzsche.github.com/cache-name)
+# - (cd ../pvc-remover && go build . && ./pvc-remover --storage-class cache)
+# - kubectl apply -f test-pod.yaml
+# - kubectl logs -f cached-build
 
-VOLPATH="$1"
-VOLNAME="$(basename "$VOLPATH")"
-export ROOT_DIR="$(dirname "$VOLPATH")"
-export CACHE_DIR="$ROOT_DIR/.cache"
+CACHE_NAME="${PVC_ANNOTATION_CACHE_NAME:-$(echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/')}"
+VOL_NAME="$(basename "$VOL_DIR")"
+export CACHE_ROOT_DIR="$(dirname "$VOL_DIR")"
 
-cache-provisioner mount "$VOLNAME"
+cache-provisioner mount "$CACHE_NAME" "$VOL_NAME"

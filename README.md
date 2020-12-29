@@ -2,12 +2,8 @@
 
 A simple, fast and scalable cache for distributed (build) jobs (early development).  
 
-Manages distributed, layered, Copy-On-Write caches as containers
-and provisions them as `PersistentVolumes` in Kubernetes.
-[rancher/local-path-provisioner](https://github.com/rancher/local-path-provisioner)
-is used with custom `setup` and `teardown` scripts to set up and sommit
-a [buildah](https://github.com/containers/buildah) container as `hostpath` PV
-(soon also synchronizing with a docker registry).
+Manages distributed, layered, Copy-On-Write cache file systems as containers and provisions them as `PersistentVolumes` (PV) in Kubernetes.
+[rancher/local-path-provisioner](https://github.com/rancher/local-path-provisioner) is configured with a custom helper Pod to set up and commit a [buildah](https://github.com/containers/buildah) container as `hostpath` PV (soon also synchronizing with a docker registry).
 
 ## Motivation
 

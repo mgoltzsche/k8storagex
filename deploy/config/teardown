@@ -1,8 +1,7 @@
 #!/bin/sh
 
-VOLPATH="$1"
-VOLNAME="$(basename "$VOLPATH")"
-export ROOT_DIR="$(dirname "$VOLPATH")"
-export CACHE_DIR="$ROOT_DIR/.cache"
+CACHE_NAME="${PVC_ANNOTATION_CACHE_NAME:-$(echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/')}"
+VOL_NAME="$(basename "$VOL_DIR")"
+export CACHE_ROOT_DIR="$(dirname "$VOL_DIR")"
 
-cache-provisioner umount "$VOLNAME"
+cache-provisioner umount "$CACHE_NAME" "$VOL_NAME"

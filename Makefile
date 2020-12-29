@@ -1,4 +1,4 @@
-IMAGE=cache-provisioner
+IMAGE=mgoltzsche/cache-provisioner-helper:latest
 
 all: image
 
@@ -6,9 +6,10 @@ image:
 	docker build --force-rm -t "$(IMAGE)" helper
 
 test: image
-	./test.sh
+	IMAGE=$(IMAGE) ./test-helper.sh
 
 clean:
-	umount testdata/pvc-xyz_default_build-cache || true
-	umount testdata/.cache/containers/storage/overlay || true
-	rm -rf testdata || true
+	docker run --rm --privileged -v `pwd`:/data alpine:3.12 /bin/sh -c ' \
+		umount /data/testmount/*; \
+		umount /data/testmount/.cache/containers/storage/overlay; \
+		rm -rf /data/testmount'

@@ -1,6 +1,16 @@
 {
-  "nodePathMap": [{
+  "nodePathMap": [
+    {
       "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
       "paths": ["/data/cache-provisioner"]
-  }]
+    },
+    {
+    	  "node": "minikube",
+      "paths": ["/data/cache-provisioner"]
+    },
+    {
+    	  "node": "kind-control-plane",
+      "paths": ["/var/opt/cache-provisioner"]
+    }
+  ]
 }

@@ -1,5 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
 namespace: cache-storage
-namePrefix: cached-
+
+commonLabels:
+  app: cache-provisioner
 
 resources:
 - github.com/rancher/local-path-provisioner/deploy?ref=v0.0.17
@@ -23,9 +28,10 @@ patchesJson6902:
 configMapGenerator:
 - name: local-path-config
   namespace: local-path-storage
-  behavior: replace
+  behavior: merge
   files:
   - config/config.json
+  - config/helper-pod.yaml
   - config/setup
   - config/teardown
 
