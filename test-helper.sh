@@ -63,3 +63,12 @@ echo
 
 	runScript /script/teardown
 )
+
+echo
+echo TEST prune
+echo
+(
+	set -ex
+	runScript -c 'buildah() { /usr/bin/buildah --root=/data/.cache/containers/storage "$@"; }; set -ex; buildah from --name c1 scratch; buildah commit c1; buildah rm c1'
+	runScript /usr/bin/cache-provisioner prune
+)

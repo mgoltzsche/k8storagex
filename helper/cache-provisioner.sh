@@ -4,6 +4,7 @@ set -eu
 
 CACHE_ROOT_DIR="${CACHE_ROOT_DIR:-/data}"
 CACHE_DIR="$CACHE_ROOT_DIR/.cache"
+export STORAGE_DRIVER=overlay
 
 usage() {
 	echo "Usage: $0 prune|{mount|umount} CACHE_NAME DEST_DIR" >&2
@@ -18,15 +19,12 @@ validate() {
 }
 
 buildah() {
-	/usr/bin/buildah \
-		--root=$CACHE_DIR/containers/storage \
-		--storage-driver=overlay \
-		"$@"
+	/usr/bin/buildah --root=$CACHE_DIR/containers/storage "$@"
 }
 
 # Args: CACHE_NAME
 cacheImageName() {
-	echo "localhost:0/cache/$1"
+	echo "localhost/cache/$1"
 }
 
 setupSharedCache() {
@@ -49,7 +47,7 @@ mountCache() {
 		# (The latest cache image could be pulled from a registry here)
 		(buildah from --pull-never --name "$MOUNT_NAME" "$(cacheImageName "$CACHE_NAME")" \
 			|| ([ $? -eq 125 ] && (
-				buildah delete "$MOUNT_NAME"
+				echo "Creating new cache image for '$CACHE_NAME'" >&2
 				buildah from --name "$MOUNT_NAME" scratch
 		))) >/dev/null &&
 		CONTAINERDIR="$(buildah mount "$MOUNT_NAME")" &&
@@ -74,7 +72,7 @@ umountCache() {
 	MOUNT_NAME="$2"
 	VOL_DIR="$CACHE_ROOT_DIR/$MOUNT_NAME"
 	setupSharedCache
-	# Commit volume only if it dir is mounted (node restart results in unmounted volumes).
+	# Commit volume only if dir is mounted (node restart results in unmounted volumes).
 	if mountpoint -q "$VOL_DIR"; then
 		echo "Committing volume $VOL_DIR to cache '$CACHE_NAME'" >&2
 		IMGID="$(buildah commit -q --timestamp 1 "$MOUNT_NAME")" &&
@@ -90,6 +88,16 @@ umountCache() {
 	rm -rf "$VOL_DIR" || (printf 'error: volume deletion blocked by mount: '; grep $MOUNT_NAME /etc/mtab; false) >&2
 }
 
+pruneImages() {
+	set -eux
+	#buildah images
+	#buildah version
+	#buildah ps -a
+	#buildah --log-level debug rmi --prune --force ||
+	#podman --root=$CACHE_DIR/containers/storage image prune --force
+	buildah rmi --prune --force
+}
+
 case "${1:-}" in
 	mount)
 		[ $# -eq 3 ] || usage
@@ -98,6 +106,10 @@ case "${1:-}" in
 	umount)
 		[ $# -eq 3 ] || usage
 		umountCache "$2" "$3" || exit 3
+	;;
+	prune)
+		[ $# -eq 1 ] || (echo no arguments expected >&2; false) || usage
+		pruneImages || exit 3
 	;;
 	*)
 		usage
