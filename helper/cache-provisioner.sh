@@ -19,7 +19,7 @@ validate() {
 }
 
 buildah() {
-	/usr/bin/buildah --root=$CACHE_DIR/containers/storage "$@"
+	/usr/bin/buildah --log-level debug --root=$CACHE_DIR/containers/storage "$@"
 }
 
 # Args: CACHE_NAME

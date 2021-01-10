@@ -4,4 +4,7 @@ CACHE_NAME="${PVC_ANNOTATION_CACHE_NAME:-$(echo "$PVC_NAME" | sed -E 's/^(.+)-[^
 VOL_NAME="$(basename "$VOL_DIR")"
 export CACHE_ROOT_DIR="$(dirname "$VOL_DIR")"
 
-cache-provisioner umount "$CACHE_NAME" "$VOL_NAME"
+#cache-provisioner umount "$CACHE_NAME" "$VOL_NAME"
+
+export KUBE_CACHE_STORAGE_ROOT="$(dirname "$VOL_DIR")/.cache"
+kube-cache --debug umount --name "$VOL_NAME" "$VOL_DIR" --commit "$CACHE_NAME"

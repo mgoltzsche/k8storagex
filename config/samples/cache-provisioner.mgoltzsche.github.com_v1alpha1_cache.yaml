@@ -1,0 +1,7 @@
+apiVersion: cache-provisioner.mgoltzsche.github.com.my.domain/v1alpha1
+kind: Cache
+metadata:
+  name: cache-sample
+spec:
+  # Add fields here
+  foo: bar

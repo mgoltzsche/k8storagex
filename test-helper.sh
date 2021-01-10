@@ -35,8 +35,8 @@ echo
 (
 	set -ex
 	runScript /script/setup
-
 	echo "$EXPECTED_CONTENT" > testmount/$VOLDIR/testfile
+	ls -la testmount/$VOLDIR
 )
 
 echo

@@ -1,0 +1,102 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: caches.cache-provisioner.mgoltzsche.github.com
+spec:
+  group: cache-provisioner.mgoltzsche.github.com
+  names:
+    kind: Cache
+    listKind: CacheList
+    plural: caches
+    singular: cache
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Cache is the Schema for the caches API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CacheSpec defines the desired state of Cache
+            properties:
+              squashLayers:
+                type: integer
+            type: object
+          status:
+            description: CacheStatus defines the observed state of Cache
+            properties:
+              lastUsed:
+                format: date-time
+                type: string
+              lastWritten:
+                format: date-time
+                type: string
+              latestImageID:
+                type: string
+              nodes:
+                items:
+                  description: NodeStatus defines the observed state of a cache on
+                    a node
+                  properties:
+                    lastUsed:
+                      format: date-time
+                      type: string
+                    latestImageID:
+                      type: string
+                    name:
+                      type: string
+                    volumes:
+                      items:
+                        description: VolumeStatus defines the observed state of a
+                          volume or rather cache mount/umount/commit lifecycle
+                        properties:
+                          created:
+                            format: date-time
+                            type: string
+                          message:
+                            type: string
+                          name:
+                            type: string
+                          phase:
+                            type: string
+                        required:
+                        - created
+                        - message
+                        - name
+                        - phase
+                        type: object
+                      type: array
+                  required:
+                  - lastUsed
+                  - name
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
