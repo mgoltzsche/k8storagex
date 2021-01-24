@@ -1,5 +1,3 @@
-
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -7,7 +5,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com.my.domain
+  - cache-provisioner.mgoltzsche.github.com
   resources:
   - caches
   verbs:
@@ -19,13 +17,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com.my.domain
+  - cache-provisioner.mgoltzsche.github.com
   resources:
   - caches/finalizers
   verbs:
   - update
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com.my.domain
+  - cache-provisioner.mgoltzsche.github.com
   resources:
   - caches/status
   verbs:

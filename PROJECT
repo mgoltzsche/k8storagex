@@ -1,4 +1,4 @@
-domain: my.domain
+domain: cache-provisioner.mgoltzsche.github.com
 layout: go.kubebuilder.io/v3
 projectName: operator
 repo: github.com/mgoltzsche/cache-provisioner

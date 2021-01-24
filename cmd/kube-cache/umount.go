@@ -17,8 +17,7 @@ var (
 )
 
 func init() {
-	addContainerNameFlag(umountCmd)
-	umountCmd.Flags().StringVar(&mountOptions.Image, "commit", "", "sets the image name the container should be committed to")
+	addContainerFlag(umountCmd)
 	rootCmd.AddCommand(umountCmd)
 }
 
@@ -31,11 +30,11 @@ func runUnmountCmd(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 	defer store.Free()
-	imageID, err := store.Unmount(mountOptions)
+	imageID, _, err := store.Unmount(mountOptions)
 	if err != nil {
 		return err
 	}
-	if mountOptions.Image != "" {
+	if imageID != "" {
 		fmt.Fprintln(cmd.OutOrStdout(), imageID)
 	}
 	return nil

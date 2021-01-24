@@ -4,3 +4,5 @@
 !**/*.mod
 !**/*.sum
 ./testmount
+cmd/*/*
+!cmd/*/*.go

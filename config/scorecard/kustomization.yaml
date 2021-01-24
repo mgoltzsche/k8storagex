@@ -1,16 +1,77 @@
 resources:
 - bases/config.yaml
 patchesJson6902:
-- path: patches/basic.config.yaml
-  target:
+- target:
     group: scorecard.operatorframework.io
     version: v1alpha3
     kind: Configuration
     name: config
-- path: patches/olm.config.yaml
-  target:
+  patch: |-
+    - op: add
+      path: /stages/0/tests/-
+      value:
+        entrypoint:
+        - scorecard-test
+        - basic-check-spec
+        image: quay.io/operator-framework/scorecard-test:v1.3.0
+        labels:
+          suite: basic
+          test: basic-check-spec-test
+- target:
     group: scorecard.operatorframework.io
     version: v1alpha3
     kind: Configuration
     name: config
+  patch: |-
+    - op: add
+      path: /stages/0/tests/-
+      value:
+        entrypoint:
+        - scorecard-test
+        - olm-bundle-validation
+        image: quay.io/operator-framework/scorecard-test:v1.3.0
+        labels:
+          suite: olm
+          test: olm-bundle-validation-test
+    - op: add
+      path: /stages/0/tests/-
+      value:
+        entrypoint:
+        - scorecard-test
+        - olm-crds-have-validation
+        image: quay.io/operator-framework/scorecard-test:v1.3.0
+        labels:
+          suite: olm
+          test: olm-crds-have-validation-test
+    - op: add
+      path: /stages/0/tests/-
+      value:
+        entrypoint:
+        - scorecard-test
+        - olm-crds-have-resources
+        image: quay.io/operator-framework/scorecard-test:v1.3.0
+        labels:
+          suite: olm
+          test: olm-crds-have-resources-test
+    - op: add
+      path: /stages/0/tests/-
+      value:
+        entrypoint:
+        - scorecard-test
+        - olm-spec-descriptors
+        image: quay.io/operator-framework/scorecard-test:v1.3.0
+        labels:
+          suite: olm
+          test: olm-spec-descriptors-test
+    - op: add
+      path: /stages/0/tests/-
+      value:
+        entrypoint:
+        - scorecard-test
+        - olm-status-descriptors
+        image: quay.io/operator-framework/scorecard-test:v1.3.0
+        labels:
+          suite: olm
+          test: olm-status-descriptors-test
+
 # +kubebuilder:scaffold:patchesJson6902

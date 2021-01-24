@@ -1,6 +1,0 @@
-- op: replace
-  path: /metadata/name
-  value: cache
-- op: replace
-  path: /provisioner
-  value: mgoltzsche.github.com/cache-provisioner

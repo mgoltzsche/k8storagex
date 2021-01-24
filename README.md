@@ -57,6 +57,44 @@ on Pod termination (if Pod's `restartPolicy: Never`), deletes the associated PVC
 waits for it to be in `Terminating` state and remove the finalizer
 so that the corresponding PV gets committed/deleted.
 
+## Development
+
+### Generate code/manifests
+
+```sh
+make generate manifests static-manifests
+```
+
+### Build
+Build binaries:
+```sh
+make kube-cache manager
+```
+
+### Test
+Test kube-cache binary:
+```sh
+make test-kube-cache
+```
+
+### Load images into kind cluster
+In order to test this component locally the images can be built and loaded into kind:
+```sh
+make kind-load-images
+```
+
+### Deploy
+The default configuration is known to work with [kind](https://github.com/kubernetes-sigs/kind) (`kind create cluster`) and [minikube](https://github.com/kubernetes/minikube) (`minikube start`) but should work with other clusters as well.  
+
+Deploy to a Kubernetes cluster (using [kpt](https://github.com/GoogleContainerTools/kpt)):
+```sh
+make deploy
+```
+Undeploy:
+```sh
+make undeploy
+```
+
 ## Roadmap
 
 * Write additional PVC on pod termination deleting controller

@@ -1,9 +1,9 @@
 resources:
 - manager.yaml
-
+commonLabels:
+  app.kubernetes.io/component: cache-manager
 generatorOptions:
   disableNameSuffixHash: true
-
 configMapGenerator:
 - name: manager-config
   files:

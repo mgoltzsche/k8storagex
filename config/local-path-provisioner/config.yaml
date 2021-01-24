@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-path-config
+  namespace: local-path-storage
+data:
+  config.json: |
+    {
+      "nodePathMap": [
+        {
+          "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+          "paths": [
+            "/data/cache-provisioner"
+          ]
+        },
+        {
+          "node": "minikube",
+          "paths": [
+            "/data/cache-provisioner"
+          ]
+        },
+        {
+          "node": "kind-control-plane",
+          "paths": [
+            "/var/opt/cache-provisioner"
+          ]
+        }
+      ]
+    }
+  helper-pod.yaml: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      containers:
+      - name: helper
+        image: mgoltzsche/kube-cache:0.0.1
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+          hostPID: true
+        env:
+        - name: KUBE_CACHE_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: data
+          mountPropagation: Bidirectional
+  setup: |-
+    set -eux
+    export KUBE_CACHE_ENABLE_K8S_SYNC=true
+    export KUBE_CACHE_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
+    export KUBE_CACHE_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
+    export KUBE_CACHE_NAMESPACE="$PVC_NAMESPACE"
+    export KUBE_CACHE_CONTAINER_NAME="`basename "$VOL_DIR"`"
+    kube-cache --debug mount "$VOL_DIR" --mode 0777
+  teardown: |-
+    set -eux
+    export KUBE_CACHE_ENABLE_K8S_SYNC=true
+    export KUBE_CACHE_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
+    export KUBE_CACHE_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
+    export KUBE_CACHE_NAMESPACE="$PVC_NAMESPACE"
+    export KUBE_CACHE_CONTAINER_NAME="`basename "$VOL_DIR"`"
+    kube-cache --debug umount "$VOL_DIR" --commit

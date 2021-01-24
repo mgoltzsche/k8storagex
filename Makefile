@@ -12,7 +12,7 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= mgoltzsche/cache-manager:0.0.1-local
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -23,20 +23,23 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-KUBE_CACHE_BUILD_TAGS ?= exclude_graphdriver_devicemapper exclude_graphdriver_btrfs btrfs_noversion containers_image_ostree_stub containers_image_openpgp
+MANAGER_BUILD_TAGS ?=
+
 KUBE_CACHE_IMG ?= mgoltzsche/kube-cache:$(VERSION)
+KUBE_CACHE_BUILD_TAGS ?= exclude_graphdriver_devicemapper exclude_graphdriver_btrfs btrfs_noversion containers_image_ostree_stub containers_image_openpgp
 
-all: manager
+BUILD_TAGS ?= $(KUBE_CACHE_BUILD_TAGS) $(MANAGER_BUILD_TAGS)
 
-test-kube-cache: kube-cache-image
-	IMAGE=${KUBE_CACHE_IMG} ./test-helper.sh
+all: manager kube-cache
 
-clean:
-	docker run --rm --privileged -v `pwd`:/data alpine:3.12 /bin/sh -c ' \
-		umount /data/testmount/*; \
-		umount /data/testmount/.cache/overlay; \
-		umount /data/testmount/.cache/aufs; \
-		rm -rf /data/testmount'
+static-manifests: manifests
+	kpt fn run --network config
+
+deploy:
+	kpt live apply config/static
+
+undeploy:
+	kpt live destroy config/static
 
 install-buildah: docker-build
 	CID=`docker create $(IMAGE)` && \
@@ -50,15 +53,25 @@ ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: generate fmt vet manifests
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test -tags "$(BUILD_TAGS)" ./... -coverprofile cover.out
 
 # Build dcachefs binary
 kube-cache: fmt vet
-	go build -o bin/kube-cache -tags "$(KUBE_CACHE_BUILD_TAGS)" ./cmd/kube-cache
+	go build -o bin/kube-cache -tags "$(BUILD_TAGS)" ./cmd/kube-cache
 
 kube-cache-image:
 	docker build -t $(KUBE_CACHE_IMG) -f Dockerfile-storage .
 	#docker build -t $(KUBE_CACHE_IMG) helper
+
+test-kube-cache: kube-cache-image
+	IMAGE=${KUBE_CACHE_IMG} ./e2e/test-helper.sh
+
+clean:
+	docker run --rm --privileged -v `pwd`:/data alpine:3.12 /bin/sh -c ' \
+		umount /data/testmount/*; \
+		umount /data/testmount/.cache/overlay; \
+		umount /data/testmount/.cache/aufs; \
+		rm -rf /data/testmount'
 
 # Build manager binary
 manager: generate fmt vet
@@ -67,23 +80,6 @@ manager: generate fmt vet
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
 	go run ./main.go
-
-# Install CRDs into a cluster
-install: manifests kustomize
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
-
-# Uninstall CRDs from a cluster
-uninstall: manifests kustomize
-	$(KUSTOMIZE) build config/crd | kubectl delete -f -
-
-# Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: manifests kustomize
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
-
-# UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
-undeploy:
-	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
@@ -96,19 +92,23 @@ fmt:
 
 # Run go vet against code
 vet:
-	go vet -tags "$(KUBE_CACHE_BUILD_TAGS)" ./...
+	go vet -tags "$(BUILD_TAGS)" ./...
 
 # Generate code
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 # Build the docker image
-docker-build: test
+docker-build:
 	docker build -t ${IMG} .
 
 # Push the docker image
 docker-push:
 	docker push ${IMG}
+
+kind-load-images: kube-cache-image docker-build
+	kind load docker-image ${IMG}
+	kind load docker-image ${KUBE_CACHE_IMG}
 
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen

@@ -24,15 +24,14 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	cacheprovisionermgoltzschegithubcomv1alpha1 "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
+	"github.com/mgoltzsche/cache-provisioner/internal/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	cacheprovisionermgoltzschegithubcomv1alpha1 "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
-	"github.com/mgoltzsche/cache-provisioner/internal/controllers"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -71,7 +70,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "146685bb.my.domain",
+		LeaderElectionID:       "146685bb.cache-manager",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

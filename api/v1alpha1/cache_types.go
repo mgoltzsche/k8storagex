@@ -20,36 +20,63 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	CachePhaseReady   CachePhase = "ready"
+	CachePhaseReject  CachePhase = "reject"
+	VolumePhaseMount             = "mount"
+	VolumePhaseCommit            = "commit"
+)
+
+type VolumePhase string
+
+type CachePhase string
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // CacheSpec defines the desired state of Cache
 type CacheSpec struct {
-	SquashLayers uint `json:"squashLayers,omitempty"`
+	//BaseCacheName string `json:"baseCacheName,omitempty"`
+	ReadOnly bool `json:"readOnly,omitempty"`
 }
 
 // CacheStatus defines the observed state of Cache
 type CacheStatus struct {
-	LatestImageID string       `json:"latestImageID,omitempty"`
-	LastUsed      metav1.Time  `json:"lastUsed,omitempty"`
-	LastWritten   metav1.Time  `json:"lastWritten,omitempty"`
-	Nodes         []NodeStatus `json:"nodes,omitempty"`
+	Image           string       `json:"image,omitempty"`
+	CacheGeneration int64        `json:"cacheGeneration,omitempty"`
+	LastImageID     *string      `json:"lastImageID,omitempty"`
+	LastUsed        *metav1.Time `json:"lastUsed,omitempty"`
+	LastWritten     *metav1.Time `json:"lastWritten,omitempty"`
+	Used            int64        `json:"used"`
+	//LastWrittenByPersistentVolumeClaim string       `json:"lastWrittenByPersistentVolumeClaim,omitempty"`
+	Nodes []NodeStatus `json:"nodes,omitempty"`
+	Phase CachePhase   `json:"phase,omitempty"`
 }
 
 // NodeStatus defines the observed state of a cache on a node
 type NodeStatus struct {
-	Name          string         `json:"name"`
-	LastUsed      metav1.Time    `json:"lastUsed"`
-	LatestImageID string         `json:"latestImageID,omitempty"`
-	Volumes       []VolumeStatus `json:"volumes,omitempty"`
+	Name            string         `json:"name"`
+	CacheGeneration int64          `json:"cacheGeneration,omitempty"`
+	LastUsed        metav1.Time    `json:"lastUsed"`
+	LastImageID     string         `json:"lastImageID,omitempty"`
+	Volumes         []VolumeStatus `json:"volumes,omitempty"`
+	LastError       *VolumeError   `json:"lastError,omitempty"`
+}
+
+type VolumeError struct {
+	VolumeName      string      `json:"volumeName"`
+	CacheGeneration *int64      `json:"cacheGeneration,omitempty"`
+	Error           string      `json:"error"`
+	Happened        metav1.Time `json:"happened"`
 }
 
 // VolumeStatus defines the observed state of a volume or rather cache mount/umount/commit lifecycle
 type VolumeStatus struct {
-	Name    string      `json:"name"`
-	Phase   string      `json:"phase"`
-	Error   string      `json:"message"`
-	Created metav1.Time `json:"created"`
+	Name            string       `json:"name"`
+	CacheGeneration int64        `json:"cacheGeneration"`
+	Created         metav1.Time  `json:"created"`
+	Committable     bool         `json:"committable,omitempty"`
+	CommitStartTime *metav1.Time `json:"commitStartTime,omitempty"`
 }
 
 // +kubebuilder:object:root=true

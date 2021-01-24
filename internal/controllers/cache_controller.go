@@ -34,9 +34,9 @@ type CacheReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com.my.domain,resources=caches,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com.my.domain,resources=caches/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com.my.domain,resources=caches/finalizers,verbs=update
+// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com,resources=caches,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com,resources=caches/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com,resources=caches/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
