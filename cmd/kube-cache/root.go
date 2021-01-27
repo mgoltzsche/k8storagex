@@ -26,16 +26,21 @@ var (
 	}
 	envStorageRoot       = "KUBE_CACHE_STORAGE_ROOT"
 	envStorageRunRoot    = "KUBE_CACHE_STORAGE_RUNROOT"
-	envRegistry          = "KUBE_CACHE_STORAGE_REGISTRY"
+	envRegistry          = "KUBE_CACHE_REGISTRY"
+	envRegistryUsername  = "KUBE_CACHE_REGISTRY_USERNAME"
+	envRegistryPassword  = "KUBE_CACHE_REGISTRY_PASSWORD"
 	envEnableK8sSync     = "KUBE_CACHE_ENABLE_K8S_SYNC"
 	envNodeName          = "KUBE_CACHE_NODE_NAME"
 	envCacheName         = "KUBE_CACHE_NAME"
 	envCacheNamespace    = "KUBE_CACHE_NAMESPACE"
+	envCacheImage        = "KUBE_CACHE_IMAGE"
 	envContainerName     = "KUBE_CACHE_CONTAINER_NAME"
 	debugFlag            bool
 	storageRootFlag      = os.Getenv(envStorageRoot)
 	storageRunRootFlag   = os.Getenv(envStorageRunRoot)
 	registryFlag         = os.Getenv(envRegistry)
+	registryUsernameFlag = os.Getenv(envRegistryUsername)
+	registryPasswordFlag = os.Getenv(envRegistryPassword)
 	enableK8sSyncFlag, _ = strconv.ParseBool(os.Getenv(envEnableK8sSync))
 	nodeNameFlag         = os.Getenv(envNodeName)
 )
@@ -49,6 +54,8 @@ func Execute(out io.Writer) error {
 	f.StringVar(&storageRootFlag, "storage-root", storageRootFlag, fmt.Sprintf("sets the storage root directory (%s)", envStorageRoot))
 	f.StringVar(&storageRunRootFlag, "storage-runroot", storageRunRootFlag, fmt.Sprintf("sets the storage state directory (%s)", envStorageRunRoot))
 	f.StringVar(&registryFlag, "registry", registryFlag, fmt.Sprintf("sets the registry (%s)", envRegistry))
+	f.StringVar(&registryUsernameFlag, "registry-username", registryUsernameFlag, fmt.Sprintf("cache image registry username (%s)", envRegistryUsername))
+	f.StringVar(&registryPasswordFlag, "registry-password", registryPasswordFlag, fmt.Sprintf("cache image registry password (%s)", envRegistryPassword))
 	f.BoolVar(&enableK8sSyncFlag, "enable-k8s-sync", enableK8sSyncFlag, "synchronizes cache operations with a Kubernetes Cache resource")
 	return rootCmd.Execute()
 }

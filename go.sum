@@ -108,8 +108,11 @@ github.com/containers/buildah v1.19.0 h1:mElFnpP2E0yzpL5QCmAMr775Dn3oEjEjqXPrYaw
 github.com/containers/buildah v1.19.0/go.mod h1:owVsIpm+ltDm3j2kqLISPpY6kqQaMeCQGFsu/+kIo7k=
 github.com/containers/common v0.33.0 h1:7Z6aAQ2s2iniEXd/IoGgc0ukmgmzAE8Oa929t6huVB8=
 github.com/containers/common v0.33.0/go.mod h1:mjDo/NKeweL/onaspLhZ38WnHXaYmrELHclIdvSnYpY=
+github.com/containers/image v1.5.1 h1:ssEuj1c24uJvdMkUa2IrawuEFZBP12p6WzrjNBTQxE0=
+github.com/containers/image v3.0.2+incompatible h1:B1lqAE8MUPCrsBLE86J0gnXleeRq8zJnQryhiiGQNyE=
 github.com/containers/image/v5 v5.9.0 h1:dRmUtcluQcmasNo3DpnRoZjfU0rOu1qZeL6wlDJr10Q=
 github.com/containers/image/v5 v5.9.0/go.mod h1:blOEFd/iFdeyh891ByhCVUc+xAcaI3gBegXECwz9UbQ=
+github.com/containers/image/v5 v5.10.0 h1:Dq4gZ2QfxKUZIfPCubgwp4WBs3ReW1+mckfsRwq+wsQ=
 github.com/containers/libtrust v0.0.0-20190913040956-14b96171aa3b h1:Q8ePgVfHDplZ7U33NwHZkrVELsZP5fYj9pM5WBZB2GE=
 github.com/containers/libtrust v0.0.0-20190913040956-14b96171aa3b/go.mod h1:9rfv8iPl1ZP7aqh9YA68wnZv2NUDbXdcdPHVz0pFbPY=
 github.com/containers/ocicrypt v1.0.3 h1:vYgl+RZ9Q3DPMuTfxmN+qp0X2Bj52uuY2vnt6GzVe1c=

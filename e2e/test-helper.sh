@@ -10,13 +10,18 @@ EXPECTED_CONTENT="testcontent $(date)"
 # ARGS: SCRIPT
 runScript() {
 	mkdir -p testmount
-	docker run --rm --privileged \
+	docker run --rm --privileged --network=host \
 		-e VOL_DIR=/data/$VOLDIR \
 		-e VOL_NAME=pv-xyz \
 		-e VOL_SIZE_BYTES=12345678 \
 		-e PVC_NAME=pvc-xyz \
 		-e PVC_NAMESPACE=test-namespace \
 		-e PVC_ANNOTATION_CACHE_NAME=test-cache \
+		-e KUBE_CACHE_REGISTRY=$TEST_REGISTRY \
+		-e KUBE_CACHE_REGISTRIES_CONF_PATH=/registries-config.json \
+		-e KUBE_CACHE_REGISTRY_USERNAME=test \
+		-e KUBE_CACHE_REGISTRY_PASSWORD=test \
+		--mount "type=bind,source=`pwd`/e2e/registries-config.json,target=/registries-config.json" \
 		--mount "type=bind,source=`pwd`/e2e/script,target=/script" \
 		--mount "type=bind,source=`pwd`/testmount,target=/data,bind-propagation=rshared" \
 		--entrypoint=/bin/sh \
@@ -64,11 +69,11 @@ echo
 	runScript /script/teardown
 )
 
-echo
-echo TEST prune
-echo
-(
-	set -ex
-	runScript -c 'buildah() { /usr/bin/buildah --root=/data/.cache/containers/storage "$@"; }; set -ex; buildah from --name c1 scratch; buildah commit c1; buildah rm c1'
-	runScript /usr/bin/cache-provisioner prune
-)
+#echo
+#echo TEST prune
+#echo
+#(
+#	set -ex
+#	runScript -c 'buildah() { /usr/bin/buildah --root=/data/.cache/containers/storage "$@"; }; set -ex; buildah from --name c1 scratch; buildah commit c1; buildah rm c1'
+#	runScript /usr/bin/cache-provisioner prune
+#)

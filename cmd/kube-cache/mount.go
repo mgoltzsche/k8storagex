@@ -35,6 +35,7 @@ func runMountCmd(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 	defer store.Free()
+	applyDefaults(&mountOptions)
 	dir, err := store.Mount(mountOptions)
 	if err != nil {
 		return err

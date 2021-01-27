@@ -30,6 +30,7 @@ func runUnmountCmd(cmd *cobra.Command, args []string) (err error) {
 		return err
 	}
 	defer store.Free()
+	applyDefaults(&mountOptions)
 	imageID, _, err := store.Unmount(mountOptions)
 	if err != nil {
 		return err

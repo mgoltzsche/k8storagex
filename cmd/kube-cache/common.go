@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"syscall"
 
-	"io/ioutil"
-
 	imgstorage "github.com/containers/image/v5/storage"
+	"github.com/containers/image/v5/types"
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/unshare"
 	cacheapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
@@ -31,6 +31,7 @@ var (
 		Context:        newContext(),
 		CacheName:      os.Getenv(envCacheName),
 		CacheNamespace: os.Getenv(envCacheNamespace),
+		Image:          os.Getenv(envCacheImage),
 		ContainerName:  os.Getenv(envContainerName),
 	}
 )
@@ -54,6 +55,15 @@ func validateOptions(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("neither --cache-name nor --image specified")
 	}
 	return nil
+}
+
+func applyDefaults(o *cache.CacheMountOptions) {
+	if o.CacheNamespace == "" {
+		o.CacheNamespace = "default"
+	}
+	if o.Image == "" && registryFlag != "" {
+		o.Image = fmt.Sprintf("%s/%s:%s", registryFlag, o.CacheNamespace, o.CacheName)
+	}
 }
 
 func newContext() context.Context {
@@ -96,7 +106,18 @@ func newStore() (r cache.Store, err error) {
 		return nil, fmt.Errorf("init store at %s: %w", opts.GraphRoot, err)
 	}
 	imgstorage.Transport.SetStore(store)
-	r = cache.New(store, logrus.NewEntry(logrus.StandardLogger()))
+	systemContext := types.SystemContext{
+		// TODO: make configurable
+		OCIInsecureSkipTLSVerify:    true,
+		DockerInsecureSkipTLSVerify: types.OptionalBoolTrue,
+	}
+	if registryUsernameFlag != "" && registryPasswordFlag != "" {
+		systemContext.DockerAuthConfig = &types.DockerAuthConfig{
+			Username: registryUsernameFlag,
+			Password: registryPasswordFlag,
+		}
+	}
+	r = cache.New(store, systemContext, logrus.NewEntry(logrus.StandardLogger()))
 	if enableK8sSyncFlag {
 		r, err = toClusterSyncedStore(r)
 		if err != nil {

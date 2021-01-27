@@ -4,8 +4,10 @@ go 1.14
 
 require (
 	github.com/containers/buildah v1.19.0
+	github.com/containers/common v0.33.0
 	github.com/containers/image/v5 v5.9.0
 	github.com/containers/storage v1.24.5
+	github.com/docker/distribution v2.7.1+incompatible
 	github.com/go-logr/logr v0.3.0
 	github.com/gophercloud/gophercloud v0.15.0 // indirect
 	github.com/onsi/ginkgo v1.14.2

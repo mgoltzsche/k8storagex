@@ -64,7 +64,7 @@ kube-cache-image:
 	#docker build -t $(KUBE_CACHE_IMG) helper
 
 test-kube-cache: kube-cache-image
-	IMAGE=${KUBE_CACHE_IMG} ./e2e/test-helper.sh
+	IMAGE=${KUBE_CACHE_IMG} ./e2e/run-tests.sh
 
 clean:
 	docker run --rm --privileged -v `pwd`:/data alpine:3.12 /bin/sh -c ' \
