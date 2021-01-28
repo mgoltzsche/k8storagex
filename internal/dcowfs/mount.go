@@ -1,4 +1,4 @@
-package cache
+package dcowfs
 
 import (
 	"github.com/pkg/errors"

@@ -14,7 +14,7 @@ import (
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/unshare"
 	cacheapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
-	"github.com/mgoltzsche/cache-provisioner/internal/cache"
+	"github.com/mgoltzsche/cache-provisioner/internal/dcowfs"
 	"github.com/mgoltzsche/cache-provisioner/internal/ksync"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	mountOptions = cache.CacheMountOptions{
+	mountOptions = dcowfs.CacheMountOptions{
 		Context:        newContext(),
 		CacheName:      os.Getenv(envCacheName),
 		CacheNamespace: os.Getenv(envCacheNamespace),
@@ -57,7 +57,7 @@ func validateOptions(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func applyDefaults(o *cache.CacheMountOptions) {
+func applyDefaults(o *dcowfs.CacheMountOptions) {
 	if o.CacheNamespace == "" {
 		o.CacheNamespace = "default"
 	}
@@ -81,7 +81,7 @@ func newContext() context.Context {
 	return ctx
 }
 
-func newStore() (r cache.Store, err error) {
+func newStore() (r dcowfs.Store, err error) {
 	opts, err := storage.DefaultStoreOptions(unshare.IsRootless(), unshare.GetRootlessUID())
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func newStore() (r cache.Store, err error) {
 			Password: registryPasswordFlag,
 		}
 	}
-	r = cache.New(store, systemContext, logrus.NewEntry(logrus.StandardLogger()))
+	r = dcowfs.New(store, systemContext, logrus.NewEntry(logrus.StandardLogger()))
 	if enableK8sSyncFlag {
 		r, err = toClusterSyncedStore(r)
 		if err != nil {
@@ -127,7 +127,7 @@ func newStore() (r cache.Store, err error) {
 	return r, nil
 }
 
-func toClusterSyncedStore(store cache.Store) (cache.Store, error) {
+func toClusterSyncedStore(store dcowfs.Store) (dcowfs.Store, error) {
 	if nodeNameFlag == "" {
 		return nil, fmt.Errorf("node name has not been specified")
 	}

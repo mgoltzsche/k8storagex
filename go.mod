@@ -7,9 +7,8 @@ require (
 	github.com/containers/common v0.33.0
 	github.com/containers/image/v5 v5.9.0
 	github.com/containers/storage v1.24.5
-	github.com/docker/distribution v2.7.1+incompatible
 	github.com/go-logr/logr v0.3.0
-	github.com/gophercloud/gophercloud v0.15.0 // indirect
+	github.com/kr/pretty v0.2.1 // indirect
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.4
 	github.com/opencontainers/image-spec v1.0.2-0.20190823105129-775207bd45b6

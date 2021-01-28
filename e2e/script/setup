@@ -1,20 +1,7 @@
 #!/bin/sh
 
-# test script:
-# - docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --device /dev/fuse alpine:3.12 sh /setup /data/pv1
-# - or for buildah: docker run --rm --privileged -v $(pwd)/config/setup:/setup --mount type=bind,source=$(pwd)/testdata,target=/data,bind-propagation=rshared --entrypoint=/bin/sh mgoltzsche/podman:1.9.3 /setup /data/pv1
-# test integration:
-# - kustomize build deploy | kubectl apply -f - && kubectl delete -n cache-storage deploy local-path-provisioner
-# - (cd ../local-path-provisioner && go build . && ./local-path-provisioner --debug start --config ../cache-provisioner/deploy/config/config.json --configmap-name local-path-config --provisioner-name mgoltzsche.github.com/cache-provisioner --service-account-name local-path-provisioner-service-account --namespace cache-storage --pvc-annotation=cache-provisioner.mgoltzsche.github.com --pvc-annotation-required=cache-provisioner.mgoltzsche.github.com/cache-name)
-# - (cd ../pvc-remover && go build . && ./pvc-remover --storage-class cache)
-# - kubectl apply -f test-pod.yaml
-# - kubectl logs -f cached-build
-
-CACHE_NAME="${PVC_ANNOTATION_CACHE_NAME:-$(echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/')}"
-VOL_NAME="$(basename "$VOL_DIR")"
-export CACHE_ROOT_DIR="$(dirname "$VOL_DIR")"
-
-#cache-provisioner mount "$CACHE_NAME" "$VOL_NAME"
-
-export KUBE_CACHE_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
-kube-cache mount --name "$CACHE_NAME" --container-name "$VOL_NAME" --mode 0777 "$VOL_DIR"
+export DCOWFS_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
+export DCOWFS_NAMESPACE="$PVC_NAMESPACE"
+export DCOWFS_CONTAINER_NAME="`basename "$VOL_DIR"`"
+export DCOWFS_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
+dcowfs mount "$VOL_DIR" --mode 0777

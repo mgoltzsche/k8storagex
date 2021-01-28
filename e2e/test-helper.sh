@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cd "$(dirname "$0"/..)"
+cd "$(dirname "$0")/.."
 
 IMAGE="${IMAGE:-cache-provisioner}"
 
@@ -17,10 +17,10 @@ runScript() {
 		-e PVC_NAME=pvc-xyz \
 		-e PVC_NAMESPACE=test-namespace \
 		-e PVC_ANNOTATION_CACHE_NAME=test-cache \
-		-e KUBE_CACHE_REGISTRY=$TEST_REGISTRY \
-		-e KUBE_CACHE_REGISTRIES_CONF_PATH=/registries-config.json \
-		-e KUBE_CACHE_REGISTRY_USERNAME=test \
-		-e KUBE_CACHE_REGISTRY_PASSWORD=test \
+		-e DCOWFS_REGISTRY=$TEST_REGISTRY \
+		-e DCOWFS_REGISTRIES_CONF_PATH=/registries-config.json \
+		-e DCOWFS_REGISTRY_USERNAME=test \
+		-e DCOWFS_REGISTRY_PASSWORD=test \
 		--mount "type=bind,source=`pwd`/e2e/registries-config.json,target=/registries-config.json" \
 		--mount "type=bind,source=`pwd`/e2e/script,target=/script" \
 		--mount "type=bind,source=`pwd`/testmount,target=/data,bind-propagation=rshared" \

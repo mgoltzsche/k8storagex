@@ -69,13 +69,13 @@ make generate manifests static-manifests
 ### Build
 Build binaries:
 ```sh
-make kube-cache manager
+make dcowfs manager
 ```
 
 ### Test
-Test kube-cache binary:
+Test dcowfs binary:
 ```sh
-make test-kube-cache
+make test-dcowfs
 ```
 
 ### Load images into kind cluster
@@ -87,7 +87,7 @@ make kind-load-images
 ### Deploy
 The default configuration is known to work with [kind](https://github.com/kubernetes-sigs/kind) (`kind create cluster`) and [minikube](https://github.com/kubernetes/minikube) (`minikube start`) but should work with other clusters as well.  
 
-Deploy to a Kubernetes cluster (using [kpt](https://github.com/GoogleContainerTools/kpt)):
+Deploy to a Kubernetes cluster (using [kpt](https://github.com/GoogleContainerTools/kpt): `kpt live apply config/static`):
 ```sh
 make deploy
 ```
@@ -95,3 +95,41 @@ Undeploy:
 ```sh
 make undeploy
 ```
+
+## Example
+
+Deploy a Pod with a PersistentVolumeClaim that points to a cache named `example-project`:
+```sh
+kubectl apply -f e2e/test-pod.yaml
+```
+Watch the Pod being created and how it fetches and runs a podman image:
+```sh
+$ kubectl logs -f cached-build
+Trying to pull docker.io/library/alpine:3.12...
+Getting image source signatures
+Copying blob sha256:801bfaa63ef2094d770c809815b9e2b9c1194728e5e754ef7bc764030e140cea
+Copying config sha256:389fef7118515c70fd6c0e0d50bb75669942ea722ccb976507d7b087e54d5a23
+Writing manifest to image destination
+Storing signatures
+hello from nested container
+```
+
+After the Pod terminated the PVC is removed and a `Cache` resource is created that refers to the node the Pod ran on:
+```sh
+$ kubectl get cache example-project
+NAME              AGE
+example-project   7s
+```
+
+When another Pod is run that points to the same cache it volume has the same contents as it had when the last Pod that was using the cache terminated.
+For the sake of the example let delete and recreate the previously applied Pod and PersistentVolumeClaim:
+```sh
+$ kubectl delete -f e2e/test-pod.yaml
+$ kubectl apply -f e2e/test-pod.yaml
+```
+
+Although the new Pod has a new PersistentVolumeClaim and PersistentVolume it runs completely cached:
+```sh
+$ kubectl logs -f cached-build
+```
+TODO: fix this!!! this doesn't work currently!

@@ -2,17 +2,19 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
 
 var (
 	umountCmd = &cobra.Command{
-		Use:   "umount",
-		Short: "unmount (and commit) a cache directory",
-		Long:  "Unmount a cache directory and optionally publish it as new image",
-		Args:  cobra.RangeArgs(0, 1),
-		RunE:  runUnmountCmd,
+		Use:     "umount",
+		Short:   "unmount (and commit) a cache directory",
+		Long:    "Unmount a cache directory and optionally publish it as new image",
+		Example: fmt.Sprintf("  %s umount --name mycache --commit /data/myvolume", os.Args[0]),
+		Args:    cobra.RangeArgs(0, 1),
+		RunE:    runUnmountCmd,
 	}
 )
 

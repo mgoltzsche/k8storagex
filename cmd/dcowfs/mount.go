@@ -12,7 +12,7 @@ var (
 		Use:     "mount",
 		Short:   "mount a cache image to a directory",
 		Long:    "Mount a cache image to a directory",
-		Example: fmt.Sprintf("  %s mount --cache-name mycache /data/myvolume", os.Args[0]),
+		Example: fmt.Sprintf("  %s mount --name mycache /data/myvolume", os.Args[0]),
 		Args:    cobra.RangeArgs(0, 1),
 		PreRunE: validateOptions,
 		RunE:    runMountCmd,

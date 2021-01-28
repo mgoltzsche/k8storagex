@@ -35,13 +35,13 @@ data:
     spec:
       containers:
       - name: helper
-        image: mgoltzsche/kube-cache:0.0.1
+        image: mgoltzsche/dcowfs:0.0.1
         imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
           hostPID: true
         env:
-        - name: KUBE_CACHE_NODE_NAME
+        - name: DCOWFS_NODE_NAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
@@ -50,17 +50,17 @@ data:
           mountPropagation: Bidirectional
   setup: |-
     set -eux
-    export KUBE_CACHE_ENABLE_K8S_SYNC=true
-    export KUBE_CACHE_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
-    export KUBE_CACHE_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
-    export KUBE_CACHE_NAMESPACE="$PVC_NAMESPACE"
-    export KUBE_CACHE_CONTAINER_NAME="`basename "$VOL_DIR"`"
-    kube-cache --debug mount "$VOL_DIR" --mode 0777
+    export DCOWFS_ENABLE_K8S_SYNC=true
+    export DCOWFS_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
+    export DCOWFS_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
+    export DCOWFS_NAMESPACE="$PVC_NAMESPACE"
+    export DCOWFS_CONTAINER_NAME="`basename "$VOL_DIR"`"
+    dcowfs mount "$VOL_DIR" --mode 0777
   teardown: |-
     set -eux
-    export KUBE_CACHE_ENABLE_K8S_SYNC=true
-    export KUBE_CACHE_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
-    export KUBE_CACHE_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
-    export KUBE_CACHE_NAMESPACE="$PVC_NAMESPACE"
-    export KUBE_CACHE_CONTAINER_NAME="`basename "$VOL_DIR"`"
-    kube-cache --debug umount "$VOL_DIR" --commit
+    export DCOWFS_ENABLE_K8S_SYNC=true
+    export DCOWFS_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
+    export DCOWFS_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
+    export DCOWFS_NAMESPACE="$PVC_NAMESPACE"
+    export DCOWFS_CONTAINER_NAME="`basename "$VOL_DIR"`"
+    dcowfs umount "$VOL_DIR" --commit

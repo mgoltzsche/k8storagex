@@ -12,7 +12,7 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Image URL to use all building/pushing image targets
-IMG ?= mgoltzsche/cache-manager:0.0.1-local
+IMG ?= mgoltzsche/cache-manager:$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -25,12 +25,12 @@ endif
 
 MANAGER_BUILD_TAGS ?=
 
-KUBE_CACHE_IMG ?= mgoltzsche/kube-cache:$(VERSION)
-KUBE_CACHE_BUILD_TAGS ?= exclude_graphdriver_devicemapper exclude_graphdriver_btrfs btrfs_noversion containers_image_ostree_stub containers_image_openpgp
+DCOWFS_IMG ?= mgoltzsche/dcowfs:$(VERSION)
+DCOWFS_BUILD_TAGS ?= exclude_graphdriver_devicemapper exclude_graphdriver_btrfs btrfs_noversion containers_image_ostree_stub containers_image_openpgp
 
-BUILD_TAGS ?= $(KUBE_CACHE_BUILD_TAGS) $(MANAGER_BUILD_TAGS)
+BUILD_TAGS ?= $(DCOWFS_BUILD_TAGS) $(MANAGER_BUILD_TAGS)
 
-all: manager kube-cache
+all: manager dcowfs
 
 static-manifests: manifests
 	kpt fn run --network config
@@ -56,15 +56,14 @@ test: generate fmt vet manifests
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test -tags "$(BUILD_TAGS)" ./... -coverprofile cover.out
 
 # Build dcachefs binary
-kube-cache: fmt vet
-	go build -o bin/kube-cache -tags "$(BUILD_TAGS)" ./cmd/kube-cache
+dcowfs: fmt vet
+	go build -o bin/dcowfs -tags "$(BUILD_TAGS)" ./cmd/dcowfs
 
-kube-cache-image:
-	docker build -t $(KUBE_CACHE_IMG) -f Dockerfile-storage .
-	#docker build -t $(KUBE_CACHE_IMG) helper
+dcowfs-image:
+	docker build -t $(DCOWFS_IMG) -f Dockerfile-dcowfs .
 
-test-kube-cache: kube-cache-image
-	IMAGE=${KUBE_CACHE_IMG} ./e2e/run-tests.sh
+test-dcowfs: dcowfs-image
+	IMAGE=${DCOWFS_IMG} ./e2e/run-tests.sh
 
 clean:
 	docker run --rm --privileged -v `pwd`:/data alpine:3.12 /bin/sh -c ' \
@@ -106,9 +105,9 @@ docker-build:
 docker-push:
 	docker push ${IMG}
 
-kind-load-images: kube-cache-image docker-build
+kind-load-images: dcowfs-image docker-build
 	kind load docker-image ${IMG}
-	kind load docker-image ${KUBE_CACHE_IMG}
+	kind load docker-image ${DCOWFS_IMG}
 
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
