@@ -17,4 +17,4 @@ export CACHE_ROOT_DIR="$(dirname "$VOL_DIR")"
 #cache-provisioner mount "$CACHE_NAME" "$VOL_NAME"
 
 export KUBE_CACHE_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
-kube-cache --debug mount --name "$CACHE_NAME" --container-name "$VOL_NAME" --mode 0777 "$VOL_DIR"
+kube-cache mount --name "$CACHE_NAME" --container-name "$VOL_NAME" --mode 0777 "$VOL_DIR"

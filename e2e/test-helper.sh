@@ -35,7 +35,7 @@ mkdir -p testmount
 rm -rf testmount/$VOLDIR
 
 echo
-echo TEST setup
+echo TEST setup $TEST_REGISTRY
 echo
 (
 	set -ex
@@ -45,7 +45,7 @@ echo
 )
 
 echo
-echo TEST teardown
+echo TEST teardown $TEST_REGISTRY
 echo
 (
 	set -ex
@@ -54,8 +54,18 @@ echo
 	[ ! -d testmount/$VOLDIR ] || (echo fail: volume should be removed >&2; false)
 )
 
+if [ "$TEST_REGISTRY" ]; then
+	echo
+	echo deleting local storage
+	echo
+	docker run --rm --privileged --mount "type=bind,src=`pwd`,dst=/data" \
+		alpine:3.12 /bin/sh -c '
+			umount /data/testmount/.cache/overlay;
+			rm -rf /data/testmount' || exit 1
+fi
+
 echo
-echo TEST restore
+echo TEST restore $TEST_REGISTRY
 echo
 (
 	set -ex

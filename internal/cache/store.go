@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/containers/buildah"
-	"github.com/containers/buildah/util"
+	//"github.com/containers/buildah/util"
 	"github.com/containers/image/v5/docker/reference"
 
 	//"github.com/containers/image/v5/image"
@@ -69,13 +69,6 @@ func (o *CacheMountOptions) containerName() (string, error) {
 	return "", nil
 }
 
-func (o *CacheMountOptions) imageName() string {
-	if o.Image == "" {
-		return fmt.Sprintf("local/cache/%s/%s:latest", o.CacheNamespace, o.CacheName)
-	}
-	return o.Image
-}
-
 // Store represents the cache store.
 // Un/Mount must be run as root and requires storage.conf to configure kernel space overlayfs (and mount option "nodev").
 type store struct {
@@ -101,11 +94,18 @@ func (s *store) Mount(opts CacheMountOptions) (dir string, err error) {
 	if err != nil {
 		return "", err
 	}
-	imageName := opts.imageName()
+	imageRef, err := s.imageRef(&opts)
+	if err != nil {
+		return "", err
+	}
+	imageName := imageRef.DockerReference().String()
 	imgLog := s.log
 	pullPolicy := buildah.PullNever
-	if imageName != "" && imageName != "scratch" {
-		imgLog = s.log.WithField("image", imageName)
+	if opts.Image != "" {
+		imgLog = s.log.WithField("image", opts.Image)
+		pullPolicy = buildah.PullAlways
+	}
+	/*if imageName != "" && imageName != "scratch" {
 		imgRef, err := alltransports.ParseImageName(imageName)
 		if err != nil {
 			return "", errors.Wrap(err, "invalid image name")
@@ -114,25 +114,6 @@ func (s *store) Mount(opts CacheMountOptions) (dir string, err error) {
 		if opts.Image != "" {
 			// pull image if name is specified explicitly or start from scratch
 			pullPolicy = buildah.PullAlways
-			/*imgSrc, err := imgRef.NewImageSource(opts.Context, &s.systemContext)
-			if err != nil {
-				return "", errors.Wrap(err, "image source from ref")
-			}
-			defer imgSrc.Close()
-			img, err := image.FromUnparsedImage(opts.Context, &s.systemContext, image.UnparsedInstance(imgSrc, nil))
-			if err != nil {
-				return "", errors.Wrap(err, "manifest from image source")
-			}
-			_, err = img.ConfigBlob(opts.Context)
-			if err != nil {
-				if err != imgstorage.ErrNoSuchImage {
-					s.log.Infof("## IMAGE LOOKUP ERROR: %#v", errors.Cause(errors.Cause(err)))
-					return "", errors.Wrapf(err, "lookup remote image %q", imageName)
-				}
-				imageName = "scratch"
-				pullPolicy = buildah.PullNever
-			}
-			s.log.Info("## IMAGE ", opts.Image, " ", imageName, " ", err)*/
 		} else {
 			// use local image if exists
 			imageName = localImageName
@@ -147,7 +128,7 @@ func (s *store) Mount(opts CacheMountOptions) (dir string, err error) {
 		}
 	} else {
 		imageName = "scratch"
-	}
+	}*/
 	if opts.ExtMountDir != "" {
 		if err = os.Mkdir(opts.ExtMountDir, 0000); err != nil {
 			return "", err
@@ -158,14 +139,15 @@ func (s *store) Mount(opts CacheMountOptions) (dir string, err error) {
 			}
 		}()
 	}
-	if imageName == "scratch" {
+	/*if imageName == "scratch" {
 		imgLog.Info("creating empty cache")
 	} else {
 		imgLog.Info("creating cache from image")
-	}
+	}*/
 	builder, err := s.newBuilder(opts, name, imageName, pullPolicy)
 	if err != nil {
-		if !strings.HasSuffix(err.Error(), ": manifest unknown") || imageName == "scratch" {
+		notFound := strings.HasSuffix(err.Error(), ": manifest unknown") || strings.HasSuffix(err.Error(), " could not be found locally")
+		if !notFound || imageName == "scratch" {
 			return "", err
 		}
 		imgLog.Info("creating empty cache since image does not exist")
@@ -227,14 +209,17 @@ func (s *store) Unmount(opts CacheMountOptions) (imageID string, newImage bool, 
 	if err != nil {
 		return "", false, err
 	}
-	imageName := opts.imageName()
-	var imgRef types.ImageReference
+	imgRef, err := s.imageRef(&opts)
+	if err != nil {
+		return "", false, err
+	}
+	/*var imgRef types.ImageReference
 	if imageName != "" {
 		imgRef, err = alltransports.ParseImageName(imageName)
 		if err != nil {
 			return "", false, errors.Wrap(err, "invalid image name provided")
 		}
-	}
+	}*/
 	dir := opts.ExtMountDir
 	if dir != "" {
 		if e := unmountAndDelete(dir); e != nil && err == nil {
@@ -345,4 +330,17 @@ func (s *store) commit(ctx context.Context, builder *buildah.Builder, imgRef typ
 		return imageID, ref, true, nil
 	}
 	return imageID, nil, false, nil
+}
+
+func (s *store) imageRef(o *CacheMountOptions) (imgRef types.ImageReference, err error) {
+	if o.Image == "" {
+		if o.CacheName == "" || o.CacheNamespace == "" {
+			return nil, fmt.Errorf("cache name and namespace must be specified")
+		}
+		localName := fmt.Sprintf("fs/%s/%s:latest", o.CacheNamespace, o.CacheName)
+		return imgstorage.Transport.ParseStoreReference(s.store, localName)
+	}
+	imgRef, err = alltransports.ParseImageName(o.Image)
+	err = errors.Wrap(err, "invalid image name provided")
+	return
 }

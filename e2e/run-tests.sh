@@ -2,7 +2,7 @@
 
 set -eux
 
-#IMAGE=$IMAGE ./e2e/test-helper.sh
+IMAGE=$IMAGE ./e2e/test-helper.sh
 
 DIR=`pwd`/e2e
 TLS_CERT_DIR="$DIR/fake-tls-cert"
@@ -26,7 +26,7 @@ docker run -d --rm --name $REGISTRY_NAME --network host \
 	--mount "type=bind,src=`pwd`/e2e/fake-htpasswd,dst=/htpasswd,readonly" \
 	registry:2.7
 
-sleep 5
+sleep 7
 
 IMAGE=$IMAGE TEST_REGISTRY=docker://127.0.0.1:8989 ./e2e/test-helper.sh
 
