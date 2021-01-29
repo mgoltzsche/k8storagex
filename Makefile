@@ -63,7 +63,8 @@ dcowfs-image:
 	docker build -t $(DCOWFS_IMG) -f Dockerfile-dcowfs .
 
 test-dcowfs: dcowfs-image
-	IMAGE=${DCOWFS_IMG} ./e2e/run-tests.sh
+	#IMAGE=${DCOWFS_IMG} ./e2e/run-tests.sh
+	IMAGE=${DCOWFS_IMG} ./e2e/test-helper.sh
 
 clean:
 	docker run --rm --privileged -v `pwd`:/data alpine:3.12 /bin/sh -c ' \

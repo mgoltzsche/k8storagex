@@ -45,17 +45,14 @@ func (s *synchronizedStore) Unmount(opts dcowfs.CacheMountOptions) (imageID stri
 		return "", false, fmt.Errorf("no cache name or namespace provided")
 	}
 	cacheName := types.NamespacedName{Name: opts.CacheName, Namespace: opts.CacheNamespace}
-	commit, syncErr := s.cluster.PrepareCommit(opts.Context, cacheName, s.nodeName, opts.ContainerName)
+	_, syncErr := s.cluster.PrepareCommit(opts.Context, cacheName, s.nodeName, opts.ContainerName)
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("unmount: %w", err)
 		}
 		err = s.cluster.UnregisterCacheVolume(opts.Context, cacheName, s.nodeName, opts.ContainerName, err)
 	}()
-	opts.Commit = commit
-	if !commit {
-		opts.Image = ""
-	}
+	//opts.Commit = commit
 	imageID, newImage, err = s.Store.Unmount(opts)
 	if err == nil {
 		err = syncErr

@@ -15,8 +15,8 @@ fi
 REGISTRY_NAME=cache-test-registry
 docker rm -f $REGISTRY_NAME || true
 docker run -d --rm --name $REGISTRY_NAME --network host \
-	-e REGISTRY_HTTP_ADDR=127.0.0.1:8989 \
-	-e REGISTRY_HTTP_HOST=http://127.0.0.1:8989 \
+	-e REGISTRY_HTTP_ADDR=:5000 \
+	-e REGISTRY_HTTP_HOST=https://127.0.0.1:5000 \
 	-e REGISTRY_HTTP_RELATIVEURLS=true \
 	-e REGISTRY_AUTH=htpasswd \
 	-e REGISTRY_AUTH_HTPASSWD_REALM=test-realm \
@@ -28,6 +28,6 @@ docker run -d --rm --name $REGISTRY_NAME --network host \
 
 sleep 7
 
-IMAGE=$IMAGE TEST_REGISTRY=docker://127.0.0.1:8989 ./e2e/test-helper.sh
+IMAGE=$IMAGE TEST_REGISTRY=docker://127.0.0.1:5000 ./e2e/test-helper.sh
 
 docker rm -f $REGISTRY_NAME || true

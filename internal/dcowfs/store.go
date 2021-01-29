@@ -94,17 +94,19 @@ func (s *store) Mount(opts CacheMountOptions) (dir string, err error) {
 	if err != nil {
 		return "", err
 	}
-	imageRef, err := s.imageRef(&opts)
-	if err != nil {
-		return "", err
-	}
-	imageName := imageRef.DockerReference().String()
+	//imageName := localImageName(&opts)
 	imgLog := s.log
 	pullPolicy := buildah.PullNever
 	if opts.Image != "" {
 		imgLog = s.log.WithField("image", opts.Image)
 		pullPolicy = buildah.PullAlways
 	}
+	imageRef, err := s.imageRef(&opts)
+	if err != nil {
+		return "", err
+	}
+	imageName := imageRef.DockerReference().String()
+
 	/*if imageName != "" && imageName != "scratch" {
 		imgRef, err := alltransports.ParseImageName(imageName)
 		if err != nil {
@@ -150,7 +152,7 @@ func (s *store) Mount(opts CacheMountOptions) (dir string, err error) {
 		if !notFound || imageName == "scratch" {
 			return "", err
 		}
-		imgLog.Info("creating empty cache since image does not exist")
+		imgLog.Infof("creating empty cache since image %s does not exist", imageName)
 		imageName = "scratch"
 		pullPolicy = buildah.PullNever
 		builder, err = s.newBuilder(opts, name, imageName, pullPolicy)
@@ -209,10 +211,11 @@ func (s *store) Unmount(opts CacheMountOptions) (imageID string, newImage bool, 
 	if err != nil {
 		return "", false, err
 	}
-	imgRef, err := s.imageRef(&opts)
+	imageName := localImageName(&opts)
+	/*imgRef, err := s.imageRef(&opts)
 	if err != nil {
 		return "", false, err
-	}
+	}*/
 	/*var imgRef types.ImageReference
 	if imageName != "" {
 		imgRef, err = alltransports.ParseImageName(imageName)
@@ -257,7 +260,7 @@ func (s *store) Unmount(opts CacheMountOptions) (imageID string, newImage bool, 
 	if err != nil || !opts.Commit {
 		return "", false, err
 	}
-	localImgRef, err := s.storeImageRef(imgRef.DockerReference().String())
+	localImgRef, err := s.storeImageRef(imageName)
 	if err != nil {
 		return "", false, err
 	}
@@ -267,7 +270,7 @@ func (s *store) Unmount(opts CacheMountOptions) (imageID string, newImage bool, 
 	}
 	if newImage && opts.Image != "" {
 		// push image to registry
-		err = s.pushImage(opts.Context, ref, imageID, imgRef)
+		err = s.pushImage(opts.Context, ref, imageID, localImgRef)
 		if err != nil {
 			return "", false, err
 		}
@@ -332,12 +335,16 @@ func (s *store) commit(ctx context.Context, builder *buildah.Builder, imgRef typ
 	return imageID, nil, false, nil
 }
 
+func localImageName(o *CacheMountOptions) string {
+	return fmt.Sprintf("fs/%s/%s:latest", o.CacheNamespace, o.CacheName)
+}
+
 func (s *store) imageRef(o *CacheMountOptions) (imgRef types.ImageReference, err error) {
 	if o.Image == "" {
 		if o.CacheName == "" || o.CacheNamespace == "" {
 			return nil, fmt.Errorf("cache name and namespace must be specified")
 		}
-		localName := fmt.Sprintf("fs/%s/%s:latest", o.CacheNamespace, o.CacheName)
+		localName := localImageName(o)
 		return imgstorage.Transport.ParseStoreReference(s.store, localName)
 	}
 	imgRef, err = alltransports.ParseImageName(o.Image)

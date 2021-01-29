@@ -121,15 +121,15 @@ NAME              AGE
 example-project   7s
 ```
 
-When another Pod is run that points to the same cache it volume has the same contents as it had when the last Pod that was using the cache terminated.
-For the sake of the example let delete and recreate the previously applied Pod and PersistentVolumeClaim:
+When another Pod is deployed that points to the same cache its volume has the same contents as it had when the last Pod that was using the cache terminated.
+For the sake of the example let's delete and recreate the previously applied Pod and PersistentVolumeClaim:
 ```sh
 $ kubectl delete -f e2e/test-pod.yaml
 $ kubectl apply -f e2e/test-pod.yaml
 ```
 
-Although the new Pod has a new PersistentVolumeClaim and PersistentVolume it runs completely cached:
+Although the new Pod has a new PersistentVolumeClaim and PersistentVolume the image is cached and doesn't need to be pulled again:
 ```sh
 $ kubectl logs -f cached-build
+hello from nested container
 ```
-TODO: fix this!!! this doesn't work currently!
