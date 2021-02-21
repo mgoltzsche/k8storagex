@@ -62,7 +62,7 @@ func applyDefaults(o *dcowfs.CacheMountOptions) {
 		o.CacheNamespace = "default"
 	}
 	if o.Image == "" && registryFlag != "" {
-		o.Image = fmt.Sprintf("%s/%s:%s", registryFlag, o.CacheNamespace, o.CacheName)
+		o.Image = fmt.Sprintf("%s/cache/%s:%s", registryFlag, o.CacheNamespace, o.CacheName)
 	}
 }
 
@@ -106,10 +106,10 @@ func newStore() (r dcowfs.Store, err error) {
 		return nil, fmt.Errorf("init store at %s: %w", opts.GraphRoot, err)
 	}
 	imgstorage.Transport.SetStore(store)
-	systemContext := types.SystemContext{
-		// TODO: make configurable
-		OCIInsecureSkipTLSVerify:    true,
-		DockerInsecureSkipTLSVerify: types.OptionalBoolTrue,
+	systemContext := types.SystemContext{}
+	if insecureFlag {
+		logrus.Warn("Registry TLS certificate validation is disabled")
+		systemContext.DockerInsecureSkipTLSVerify = types.OptionalBoolTrue
 	}
 	if registryUsernameFlag != "" && registryPasswordFlag != "" {
 		systemContext.DockerAuthConfig = &types.DockerAuthConfig{

@@ -18,9 +18,10 @@ runScript() {
 		-e PVC_NAMESPACE=test-namespace \
 		-e PVC_ANNOTATION_CACHE_NAME=test-cache \
 		-e DCOWFS_REGISTRY=$TEST_REGISTRY \
+		-e DCOWFS_REGISTRY_USERNAME=testuser \
+		-e DCOWFS_REGISTRY_PASSWORD=testpass \
 		-e DCOWFS_REGISTRIES_CONF_PATH=/registries-config.json \
-		-e DCOWFS_REGISTRY_USERNAME=test \
-		-e DCOWFS_REGISTRY_PASSWORD=test \
+		-e DCOWFS_INSECURE_SKIP_TLS_VERIFY=true \
 		--mount "type=bind,source=`pwd`/e2e/registries-config.json,target=/registries-config.json" \
 		--mount "type=bind,source=`pwd`/e2e/script,target=/script" \
 		--mount "type=bind,source=`pwd`/testmount,target=/data,bind-propagation=rshared" \

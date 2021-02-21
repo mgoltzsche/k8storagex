@@ -29,6 +29,7 @@ var (
 	envRegistry          = "DCOWFS_REGISTRY"
 	envRegistryUsername  = "DCOWFS_REGISTRY_USERNAME"
 	envRegistryPassword  = "DCOWFS_REGISTRY_PASSWORD"
+	envInsecure          = "DCOWFS_INSECURE_SKIP_TLS_VERIFY"
 	envEnableK8sSync     = "DCOWFS_ENABLE_K8S_SYNC"
 	envNodeName          = "DCOWFS_NODE_NAME"
 	envCacheName         = "DCOWFS_NAME"
@@ -41,6 +42,7 @@ var (
 	registryFlag         = os.Getenv(envRegistry)
 	registryUsernameFlag = os.Getenv(envRegistryUsername)
 	registryPasswordFlag = os.Getenv(envRegistryPassword)
+	insecureFlag, _      = strconv.ParseBool(os.Getenv(envInsecure))
 	enableK8sSyncFlag, _ = strconv.ParseBool(os.Getenv(envEnableK8sSync))
 	nodeNameFlag         = os.Getenv(envNodeName)
 )
@@ -56,6 +58,7 @@ func Execute(out io.Writer) error {
 	f.StringVar(&registryFlag, "registry", registryFlag, fmt.Sprintf("sets the registry (%s)", envRegistry))
 	f.StringVar(&registryUsernameFlag, "registry-username", registryUsernameFlag, fmt.Sprintf("cache image registry username (%s)", envRegistryUsername))
 	f.StringVar(&registryPasswordFlag, "registry-password", registryPasswordFlag, fmt.Sprintf("cache image registry password (%s)", envRegistryPassword))
+	f.BoolVar(&insecureFlag, "insecure-skip-tls-verify", insecureFlag, fmt.Sprintf("skips registry TLS certificate verification - do not enable in production (%s)", envInsecure))
 	f.BoolVar(&enableK8sSyncFlag, "enable-k8s-sync", enableK8sSyncFlag, "synchronizes cache operations with a Kubernetes Cache resource")
 	return rootCmd.Execute()
 }

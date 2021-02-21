@@ -41,12 +41,15 @@ deploy:
 undeploy:
 	kpt live destroy config/static
 
-install-buildah: docker-build
-	CID=`docker create $(IMAGE)` && \
+install-buildah: legacy-helper-image
+	CID=`docker create local/buildah-helper` && \
 	docker cp $$CID:/usr/bin/buildah /usr/local/bin/buildah; \
 	STATUS=$$?; \
 	docker rm $$CID; \
 	exit $$STATUS
+
+legacy-helper-image:
+	docker build -t local/buildah-helper -f helper/Dockerfile helper
 
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
@@ -63,15 +66,14 @@ dcowfs-image:
 	docker build -t $(DCOWFS_IMG) -f Dockerfile-dcowfs .
 
 test-dcowfs: dcowfs-image
-	#IMAGE=${DCOWFS_IMG} ./e2e/run-tests.sh
-	IMAGE=${DCOWFS_IMG} ./e2e/test-helper.sh
+	IMAGE=${DCOWFS_IMG} ./e2e/run-tests.sh
 
 clean:
 	docker run --rm --privileged -v `pwd`:/data alpine:3.12 /bin/sh -c ' \
 		umount /data/testmount/*; \
 		umount /data/testmount/.cache/overlay; \
 		umount /data/testmount/.cache/aufs; \
-		rm -rf /data/testmount'
+		rm -rf /data/testmount /data/fake-tls-cert'
 
 # Build manager binary
 manager: generate fmt vet

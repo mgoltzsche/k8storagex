@@ -1,7 +1,7 @@
 {
 	"auths": {
 		"127.0.0.1:8989": {
-			"auth": "dGVzdDp0ZXN0"
+			"auth": "dGVzdHVzZXI6dGVzdHBhc3MK"
 		}
 	}
 }
