@@ -1,5 +1,5 @@
 testmount
-e2e/fake-tls-cert
+fake-tls-cert
 
 # Binaries for programs and plugins
 *.exe
@@ -9,7 +9,7 @@ e2e/fake-tls-cert
 *.dylib
 cmd/*/*
 !cmd/*/*.go
-bin
+build
 testbin/*
 
 # Test binary, build with `go test -c`

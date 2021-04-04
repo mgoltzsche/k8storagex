@@ -1,0 +1,43 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-job2
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 9000
+        runAsGroup: 9000
+      containers:
+      - name: build
+        image: alpine:3.13
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+            set -ex
+            cat /cache/date
+        volumeMounts:
+        - mountPath: /cache
+          name: cache
+      volumes:
+      - name: cache
+        persistentVolumeClaim:
+          claimName: test-pvc2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc2
+  annotations:
+    cache-provisioner.mgoltzsche.github.com/cache-name: test-project
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: cache

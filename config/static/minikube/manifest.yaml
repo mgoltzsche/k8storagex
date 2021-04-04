@@ -1,0 +1,1730 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  labels:
+    app: cache-provisioner
+  name: caches.cache-provisioner.mgoltzsche.github.com
+spec:
+  group: cache-provisioner.mgoltzsche.github.com
+  names:
+    kind: Cache
+    listKind: CacheList
+    plural: caches
+    singular: cache
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Cache is the Schema for the caches API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CacheSpec defines the desired state of Cache
+            properties:
+              readOnly:
+                description: BaseCacheName string `json:"baseCacheName,omitempty"`
+                type: boolean
+            type: object
+          status:
+            description: CacheStatus defines the observed state of Cache
+            properties:
+              cacheGeneration:
+                format: int64
+                type: integer
+              conditions:
+                description: Conditions represent the latest available observations
+                  of a Cache's current state.
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource. --- This struct is intended for direct
+                    use as an array at the field path .status.conditions.  For example,
+                    type FooStatus struct{     // Represents the observations of a
+                    foo's current state.     // Known .status.conditions.type are:
+                    \"Available\", \"Progressing\", and \"Degraded\"     // +patchMergeKey=type
+                    \    // +patchStrategy=merge     // +listType=map     // +listMapKey=type
+                    \    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`
+                    \n     // other fields }"
+                  properties:
+                    lastTransitionTime:
+                      description: lastTransitionTime is the last time the condition
+                        transitioned from one status to another. This should be when
+                        the underlying condition changed.  If that is not known, then
+                        using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: message is a human readable message indicating
+                        details about the transition. This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: observedGeneration represents the .metadata.generation
+                        that the condition was set based upon. For instance, if .metadata.generation
+                        is currently 12, but the .status.conditions[x].observedGeneration
+                        is 9, the condition is out of date with respect to the current
+                        state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: reason contains a programmatic identifier indicating
+                        the reason for the condition's last transition. Producers
+                        of specific condition types may define expected values and
+                        meanings for this field, and whether the values are considered
+                        a guaranteed API. The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                        --- Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important. The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              image:
+                type: string
+              lastImageID:
+                type: string
+              lastReset:
+                properties:
+                  cacheGeneration:
+                    format: int64
+                    type: integer
+                  resetTime:
+                    format: date-time
+                    type: string
+                required:
+                - cacheGeneration
+                - resetTime
+                type: object
+              lastUsed:
+                format: date-time
+                type: string
+              lastWritten:
+                format: date-time
+                type: string
+              nodes:
+                description: LastWrittenByPersistentVolumeClaim string       `json:"lastWrittenByPersistentVolumeClaim,omitempty"`
+                items:
+                  description: NodeStatus defines the observed state of a cache on
+                    a node
+                  properties:
+                    cacheGeneration:
+                      format: int64
+                      type: integer
+                    lastError:
+                      properties:
+                        cacheGeneration:
+                          format: int64
+                          type: integer
+                        error:
+                          type: string
+                        happened:
+                          format: date-time
+                          type: string
+                        volumeName:
+                          type: string
+                      required:
+                      - error
+                      - happened
+                      - volumeName
+                      type: object
+                    lastImageID:
+                      type: string
+                    lastUsed:
+                      format: date-time
+                      type: string
+                    name:
+                      type: string
+                    volumes:
+                      items:
+                        description: VolumeStatus defines the observed state of a
+                          volume or rather cache mount/umount/commit lifecycle
+                        properties:
+                          cacheGeneration:
+                            format: int64
+                            type: integer
+                          commitStartTime:
+                            format: date-time
+                            type: string
+                          committable:
+                            type: boolean
+                          created:
+                            format: date-time
+                            type: string
+                          name:
+                            type: string
+                        required:
+                        - cacheGeneration
+                        - created
+                        - name
+                        type: object
+                      type: array
+                  required:
+                  - lastUsed
+                  - name
+                  type: object
+                type: array
+              phase:
+                type: string
+              used:
+                format: int64
+                type: integer
+            required:
+            - used
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-provisioner
+  name: cache-storage
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-provisioner
+  name: cache-local-path-provisioner-service-account
+  namespace: cache-storage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-provisioner
+  name: cache-local-path-provisioner-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - persistentvolumeclaims
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  - persistentvolumes
+  - pods
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-provisioner
+  name: cache-local-path-provisioner-bind
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cache-local-path-provisioner-role
+subjects:
+- kind: ServiceAccount
+  name: cache-local-path-provisioner-service-account
+  namespace: cache-storage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-provisioner
+  name: cache-local-path-provisioner
+  namespace: cache-storage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cache-provisioner
+      app.kubernetes.io/component: cache-provisioner
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: cache-provisioner
+        app.kubernetes.io/component: cache-provisioner
+    spec:
+      containers:
+      - command:
+        - local-path-provisioner
+        - --debug
+        - start
+        - --config
+        - /etc/config/config.json
+        env:
+        - name: CONFIGMAP_NAME
+          value: cache-local-path-config
+        - name: SERVICE_ACCOUNT_NAME
+          value: cache-manager
+        - name: PROVISIONER_NAME
+          value: mgoltzsche.github.com/cache-provisioner
+        - name: PVC_ANNOTATION
+          value: cache-provisioner.mgoltzsche.github.com
+        - name: PVC_ANNOTATION_REQUIRED
+          value: cache-provisioner.mgoltzsche.github.com/cache-name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        # Using patched version for now until PR is merged: https://github.com/rancher/local-path-provisioner/pull/166
+        image: mgoltzsche/local-path-provisioner:0.0.19-helper-pod-patch
+        imagePullPolicy: IfNotPresent
+        name: local-path-provisioner
+        volumeMounts:
+        - mountPath: /etc/config/
+          name: config-volume
+      serviceAccountName: cache-local-path-provisioner-service-account
+      volumes:
+      - configMap:
+          name: cache-local-path-config
+        name: config-volume
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-provisioner
+  name: cache
+provisioner: mgoltzsche.github.com/cache-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+---
+apiVersion: v1
+data:
+  config.json: |
+    {
+      "nodePathMap": [
+        {
+          "node": "DEFAULT_PATH_FOR_NON_LISTED_NODES",
+          "paths": [
+            "/data/cache-provisioner"
+          ]
+        },
+        {
+          "node": "minikube",
+          "paths": [
+            "/data/cache-provisioner"
+          ]
+        },
+        {
+          "node": "kind-control-plane",
+          "paths": [
+            "/var/opt/cache-provisioner"
+          ]
+        }
+      ]
+    }
+  helper-pod.yaml: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: helper-pod
+    spec:
+      containers:
+      - name: helper
+        image: mgoltzsche/dcowfs:0.0.1
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+          hostPID: true
+        env:
+        - name: DCOWFS_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: data
+          mountPropagation: Bidirectional
+  setup: |-
+    set -eux
+    export DCOWFS_ENABLE_K8S_SYNC=true
+    export DCOWFS_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
+    export DCOWFS_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
+    export DCOWFS_NAMESPACE="$PVC_NAMESPACE"
+    export DCOWFS_CONTAINER_NAME="`basename "$VOL_DIR"`"
+    dcowfs mount "$VOL_DIR" --mode 0777
+  teardown: |-
+    set -eux
+    export DCOWFS_ENABLE_K8S_SYNC=true
+    export DCOWFS_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
+    export DCOWFS_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
+    export DCOWFS_NAMESPACE="$PVC_NAMESPACE"
+    export DCOWFS_CONTAINER_NAME="`basename "$VOL_DIR"`"
+    dcowfs umount "$VOL_DIR" --commit
+kind: ConfigMap
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-provisioner
+  name: cache-local-path-config
+  namespace: cache-storage
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-provisioner
+  name: cache-manager
+  namespace: cache-storage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app: cache-provisioner
+  name: manager-role
+rules:
+- apiGroups:
+  - cache-provisioner.mgoltzsche.github.com
+  resources:
+  - caches
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cache-provisioner.mgoltzsche.github.com
+  resources:
+  - caches/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cache-provisioner.mgoltzsche.github.com
+  resources:
+  - caches/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: cache-provisioner
+  name: manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: manager-role
+subjects:
+- kind: ServiceAccount
+  name: cache-manager
+  namespace: cache-storage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: cache-provisioner
+  name: leader-election-role
+  namespace: cache-storage
+rules:
+- apiGroups:
+  - ""
+  - coordination.k8s.io
+  resources:
+  - configmaps
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: cache-provisioner
+  name: leader-election-rolebinding
+  namespace: cache-storage
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: cache-storage
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-pvc-remover
+  name: cache-pvc-remover-controller-manager
+  namespace: cache-storage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-pvc-remover
+  name: cache-pvc-remover-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaim
+  verbs:
+  - delete
+  - get
+  - list
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-pvc-remover
+  name: cache-pvc-remover-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cache-pvc-remover-manager-role
+subjects:
+- kind: ServiceAccount
+  name: cache-pvc-remover-controller-manager
+  namespace: cache-storage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-pvc-remover
+  name: cache-pvc-remover-leader-election-role
+  namespace: cache-storage
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-pvc-remover
+  name: cache-pvc-remover-leader-election-rolebinding
+  namespace: cache-storage
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cache-pvc-remover-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: cache-pvc-remover-controller-manager
+  namespace: cache-storage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-pvc-remover
+    control-plane: controller-manager
+  name: cache-pvc-remover-controller-manager
+  namespace: cache-storage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cache-provisioner
+      app.kubernetes.io/component: cache-pvc-remover
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        app: cache-provisioner
+        app.kubernetes.io/component: cache-pvc-remover
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --enable-leader-election
+        - --storage-class=cache
+        command:
+        - /manager
+        env:
+        - name: WATCH_NAMESPACE
+          value: ""
+        image: mgoltzsche/pvc-remover:0.1.1
+        name: manager
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+      serviceAccountName: cache-pvc-remover-controller-manager
+      terminationGracePeriodSeconds: 10
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-manager
+    control-plane: controller-manager
+  name: cache-controller-manager
+  namespace: cache-storage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cache-provisioner
+      app.kubernetes.io/component: cache-manager
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        app: cache-provisioner
+        app.kubernetes.io/component: cache-manager
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --config=controller_manager_config.yaml
+        command:
+        - /manager
+        image: mgoltzsche/cache-manager:0.0.1
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        volumeMounts:
+        - mountPath: /controller_manager_config.yaml
+          name: manager-config
+          subPath: controller_manager_config.yaml
+      securityContext:
+        runAsUser: 65532
+      serviceAccountName: cache-manager
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - configMap:
+          name: manager-config
+        name: manager-config
+---
+apiVersion: v1
+data:
+  controller_manager_config.yaml: |
+    ---
+    apiVersion: controller-runtime.sigs.k8s.io/v1alpha1
+    kind: ControllerManagerConfig
+    health:
+      healthProbeBindAddress: :8081
+    metrics:
+      bindAddress: 127.0.0.1:8080
+    leaderElection:
+      leaderElect: true
+      resourceName: cache-operator.mgoltzsche.github.com
+    metadata:
+      annotations:
+        config.kubernetes.io/index: '0'
+        config.kubernetes.io/path: 'manager/controller_manager_config.yaml'
+        config.k8s.io/id: '12'
+kind: ConfigMap
+metadata:
+  labels:
+    app: cache-provisioner
+    app.kubernetes.io/component: cache-manager
+  name: manager-config
+  namespace: cache-storage
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: image-registry-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: image-registry-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - services/finalizers
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  - serviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - get
+  - create
+- apiGroups:
+  - apps
+  resourceNames:
+  - image-registry-operator
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  - deployments
+  verbs:
+  - get
+- apiGroups:
+  - registry.mgoltzsche.github.com
+  resources:
+  - '*'
+  - imageregistryaccounts
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - certificates
+  - issuers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: image-registry-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: image-registry-operator
+subjects:
+- kind: ServiceAccount
+  name: image-registry-operator
+  namespace: image-registry-operator
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: imageregistries.registry.mgoltzsche.github.com
+spec:
+  group: registry.mgoltzsche.github.com
+  names:
+    kind: ImageRegistry
+    listKind: ImageRegistryList
+    plural: imageregistries
+    singular: imageregistry
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: ImageRegistry is the Schema for the imageregistries API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ImageRegistrySpec defines the desired state of ImageRegistry
+          properties:
+            auth:
+              description: AuthSpec specifies the CA certificate and optional docker_auth
+                ConfigMap name
+              properties:
+                ca:
+                  description: CertificateSpec refers to a secret and an optional
+                    issuer to generate it
+                  properties:
+                    issuerRef:
+                      description: CertificateIssuerSpec refers to a certificate issuer
+                      properties:
+                        kind:
+                          type: string
+                        name:
+                          type: string
+                      required:
+                      - kind
+                      - name
+                      type: object
+                    secretName:
+                      type: string
+                  type: object
+                configMapName:
+                  type: string
+              required:
+              - ca
+              type: object
+            persistentVolumeClaim:
+              description: PersistentVolumeClaimSpec specifies the PersistentVolumeClaim
+                that should be maintained
+              properties:
+                accessModes:
+                  items:
+                    type: string
+                  type: array
+                deleteClaim:
+                  type: boolean
+                resources:
+                  description: ResourceRequirements describes the compute resource
+                    requirements.
+                  properties:
+                    limits:
+                      additionalProperties:
+                        type: string
+                      description: 'Limits describes the maximum amount of compute
+                        resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                      type: object
+                    requests:
+                      additionalProperties:
+                        type: string
+                      description: 'Requests describes the minimum amount of compute
+                        resources required. If Requests is omitted for a container,
+                        it defaults to Limits if that is explicitly specified, otherwise
+                        to an implementation-defined value. More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/'
+                      type: object
+                  type: object
+                storageClassName:
+                  type: string
+              type: object
+            replicas:
+              format: int32
+              type: integer
+            tls:
+              description: CertificateSpec refers to a secret and an optional issuer
+                to generate it
+              properties:
+                issuerRef:
+                  description: CertificateIssuerSpec refers to a certificate issuer
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  type: object
+                secretName:
+                  type: string
+              type: object
+          required:
+          - persistentVolumeClaim
+          type: object
+        status:
+          description: ImageRegistryStatus defines the observed state of ImageRegistry
+          properties:
+            conditions:
+              additionalProperties:
+                description: "Condition represents an observation of an object's state.
+                  Conditions are an extension mechanism intended to be used when the
+                  details of an observation are not a priori known or would not apply
+                  to all instances of a given Kind. \n Conditions should be added
+                  to explicitly convey properties that users and components care about
+                  rather than requiring those properties to be inferred from other
+                  observations. Once defined, the meaning of a Condition can not be
+                  changed arbitrarily - it becomes part of the API, and has the same
+                  backwards- and forwards-compatibility concerns of any other part
+                  of the API."
+                properties:
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    description: ConditionReason is intended to be a one-word, CamelCase
+                      representation of the category of cause of the current status.
+                      It is intended to be used in concise output, such as one-line
+                      kubectl get output, and in summarizing occurrences of causes.
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    description: "ConditionType is the type of the condition and is
+                      typically a CamelCased word or short phrase. \n Condition types
+                      should indicate state in the \"abnormal-true\" polarity. For
+                      example, if the condition indicates when a policy is invalid,
+                      the \"is valid\" case is probably the norm, so the condition
+                      should be called \"Invalid\"."
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              description: Conditions is a set of Condition instances.
+              type: array
+            hostname:
+              type: string
+            observedGeneration:
+              format: int64
+              type: integer
+            tlsSecretName:
+              type: string
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: imageregistryaccounts.registry.mgoltzsche.github.com
+spec:
+  group: registry.mgoltzsche.github.com
+  names:
+    kind: ImageRegistryAccount
+    listKind: ImageRegistryAccountList
+    plural: imageregistryaccounts
+    singular: imageregistryaccount
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: ImageRegistryAccount is the Schema for the imageregistryaccounts
+        API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ImageRegistryAccountSpec defines the desired state of ImageRegistryAccount
+          properties:
+            labels:
+              additionalProperties:
+                items:
+                  type: string
+                type: array
+              description: Labels to match against authorization rules
+              type: object
+            password:
+              description: bcrypt hashed password
+              type: string
+            ttl:
+              type: string
+          required:
+          - password
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: imagepushsecrets.registry.mgoltzsche.github.com
+spec:
+  group: registry.mgoltzsche.github.com
+  names:
+    kind: ImagePushSecret
+    listKind: ImagePushSecretList
+    plural: imagepushsecrets
+    singular: imagepushsecret
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: ImagePushSecret is the Schema for the imagepushsecrets API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ImagePushSecretSpec defines the desired state of ImagePushSecret
+          type: object
+        status:
+          description: ImageSecretStatus defines the observed state of ImagePullSecret
+          properties:
+            conditions:
+              additionalProperties:
+                description: "Condition represents an observation of an object's state.
+                  Conditions are an extension mechanism intended to be used when the
+                  details of an observation are not a priori known or would not apply
+                  to all instances of a given Kind. \n Conditions should be added
+                  to explicitly convey properties that users and components care about
+                  rather than requiring those properties to be inferred from other
+                  observations. Once defined, the meaning of a Condition can not be
+                  changed arbitrarily - it becomes part of the API, and has the same
+                  backwards- and forwards-compatibility concerns of any other part
+                  of the API."
+                properties:
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    description: ConditionReason is intended to be a one-word, CamelCase
+                      representation of the category of cause of the current status.
+                      It is intended to be used in concise output, such as one-line
+                      kubectl get output, and in summarizing occurrences of causes.
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    description: "ConditionType is the type of the condition and is
+                      typically a CamelCased word or short phrase. \n Condition types
+                      should indicate state in the \"abnormal-true\" polarity. For
+                      example, if the condition indicates when a policy is invalid,
+                      the \"is valid\" case is probably the norm, so the condition
+                      should be called \"Invalid\"."
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              description: Conditions represent the latest available observations
+                of an object's state
+              type: array
+            passwords:
+              description: The currently active bcrypt encoded passwords - should
+                be two.
+              items:
+                type: string
+              type: array
+            rotation:
+              description: Password rotation amount.
+              format: int64
+              type: integer
+            rotationDate:
+              description: Date on which the latest password has been generated.
+              format: date-time
+              type: string
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: imagepullsecrets.registry.mgoltzsche.github.com
+spec:
+  group: registry.mgoltzsche.github.com
+  names:
+    kind: ImagePullSecret
+    listKind: ImagePullSecretList
+    plural: imagepullsecrets
+    singular: imagepullsecret
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: ImagePullSecret is the Schema for the imagepullsecrets API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ImagePullSecretSpec defines the desired state of ImagePullSecret
+          type: object
+        status:
+          description: ImageSecretStatus defines the observed state of ImagePullSecret
+          properties:
+            conditions:
+              additionalProperties:
+                description: "Condition represents an observation of an object's state.
+                  Conditions are an extension mechanism intended to be used when the
+                  details of an observation are not a priori known or would not apply
+                  to all instances of a given Kind. \n Conditions should be added
+                  to explicitly convey properties that users and components care about
+                  rather than requiring those properties to be inferred from other
+                  observations. Once defined, the meaning of a Condition can not be
+                  changed arbitrarily - it becomes part of the API, and has the same
+                  backwards- and forwards-compatibility concerns of any other part
+                  of the API."
+                properties:
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    description: ConditionReason is intended to be a one-word, CamelCase
+                      representation of the category of cause of the current status.
+                      It is intended to be used in concise output, such as one-line
+                      kubectl get output, and in summarizing occurrences of causes.
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    description: "ConditionType is the type of the condition and is
+                      typically a CamelCased word or short phrase. \n Condition types
+                      should indicate state in the \"abnormal-true\" polarity. For
+                      example, if the condition indicates when a policy is invalid,
+                      the \"is valid\" case is probably the norm, so the condition
+                      should be called \"Invalid\"."
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              description: Conditions represent the latest available observations
+                of an object's state
+              type: array
+            passwords:
+              description: The currently active bcrypt encoded passwords - should
+                be two.
+              items:
+                type: string
+              type: array
+            rotation:
+              description: Password rotation amount.
+              format: int64
+              type: integer
+            rotationDate:
+              description: Date on which the latest password has been generated.
+              format: date-time
+              type: string
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: imagebuildenvs.registry.mgoltzsche.github.com
+spec:
+  group: registry.mgoltzsche.github.com
+  names:
+    kind: ImageBuildEnv
+    listKind: ImageBuildEnvList
+    plural: imagebuildenvs
+    singular: imagebuildenv
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: ImageBuildEnv is the Schema for the imagebuildenvs API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: ImageBuildEnvSpec defines the desired state of ImageBuildEnv
+          properties:
+            redis:
+              type: boolean
+            secrets:
+              items:
+                properties:
+                  secretName:
+                    type: string
+                required:
+                - secretName
+                type: object
+              type: array
+          type: object
+        status:
+          description: ImageBuildEnvStatus defines the observed state of ImageBuildEnv
+          properties:
+            conditions:
+              additionalProperties:
+                description: "Condition represents an observation of an object's state.
+                  Conditions are an extension mechanism intended to be used when the
+                  details of an observation are not a priori known or would not apply
+                  to all instances of a given Kind. \n Conditions should be added
+                  to explicitly convey properties that users and components care about
+                  rather than requiring those properties to be inferred from other
+                  observations. Once defined, the meaning of a Condition can not be
+                  changed arbitrarily - it becomes part of the API, and has the same
+                  backwards- and forwards-compatibility concerns of any other part
+                  of the API."
+                properties:
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  message:
+                    type: string
+                  reason:
+                    description: ConditionReason is intended to be a one-word, CamelCase
+                      representation of the category of cause of the current status.
+                      It is intended to be used in concise output, such as one-line
+                      kubectl get output, and in summarizing occurrences of causes.
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    description: "ConditionType is the type of the condition and is
+                      typically a CamelCased word or short phrase. \n Condition types
+                      should indicate state in the \"abnormal-true\" polarity. For
+                      example, if the condition indicates when a policy is invalid,
+                      the \"is valid\" case is probably the norm, so the condition
+                      should be called \"Invalid\"."
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              description: Conditions represent the latest available observations
+                of an object's state
+              type: array
+            observedGeneration:
+              format: int64
+              type: integer
+            secretRefs:
+              description: SecretRefs lists the watched input secrets
+              items:
+                type: string
+              type: array
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: image-registry-operator
+  namespace: image-registry-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  name: image-registry-operator
+  namespace: image-registry-operator
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - services/finalizers
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  - serviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - get
+  - create
+- apiGroups:
+  - apps
+  resourceNames:
+  - image-registry-operator
+  resources:
+  - deployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - replicasets
+  - deployments
+  verbs:
+  - get
+- apiGroups:
+  - registry.mgoltzsche.github.com
+  resources:
+  - '*'
+  - imageregistryaccounts
+  - imagebuildenvs
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - certificates
+  - issuers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: image-registry-operator
+  namespace: image-registry-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: image-registry-operator
+subjects:
+- kind: ServiceAccount
+  name: image-registry-operator
+  namespace: image-registry-operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-registry-operator
+  namespace: image-registry-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: image-registry-operator
+  template:
+    metadata:
+      labels:
+        name: image-registry-operator
+    spec:
+      containers:
+      - command:
+        - image-registry-operator
+        env:
+        - name: WATCH_NAMESPACE
+          value: ""
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: OPERATOR_NAME
+          value: image-registry-operator
+        - name: OPERATOR_DNS_ZONE
+          value: svc.cluster.local
+        - name: OPERATOR_SECRET_TTL
+          value: 24h
+        - name: OPERATOR_DEFAULT_REGISTRY_NAME
+          value: registry
+        - name: OPERATOR_DEFAULT_REGISTRY_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: mgoltzsche/image-registry-operator:latest
+        imagePullPolicy: IfNotPresent
+        name: operator
+      serviceAccountName: image-registry-operator
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nodehack-daemonset
+  namespace: image-registry-operator
+spec:
+  selector:
+    matchLabels:
+      run-once-daemonset: nodehack-daemonset
+  template:
+    metadata:
+      labels:
+        run-once-daemonset: nodehack-daemonset
+    spec:
+      containers:
+      - args:
+        - setca
+        - setdns
+        - restartcrio
+        - setready
+        - sleepinfinity
+        env:
+        - name: CERT_NAME
+          value: registry-ca
+        - name: CERT_FILE
+          value: /ca-cert/ca.crt
+        - name: NAMESERVER
+          value: 10.96.0.10
+        - name: DEBUG
+          value: x
+        image: mgoltzsche/nodehack:latest
+        imagePullPolicy: IfNotPresent
+        name: nodehack
+        readinessProbe:
+          exec:
+            command:
+            - /bin/cat
+            - /tmp/ready
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: 300m
+            memory: 64Mi
+          requests:
+            cpu: 10m
+            memory: 16Mi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /ca-cert
+          name: ca-cert
+        - mountPath: /host
+          name: hostfs
+          readOnly: false
+      hostPID: true
+      terminationGracePeriodSeconds: 5
+      volumes:
+      - name: ca-cert
+        secret:
+          secretName: image-registry-root-ca
+      - hostPath:
+          path: /
+        name: hostfs
+  updateStrategy:
+    type: RollingUpdate
+---
+apiVersion: registry.mgoltzsche.github.com/v1alpha1
+kind: ImageRegistry
+metadata:
+  name: registry
+spec:
+  persistentVolumeClaim:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: 1Gi
+    storageClassName: standard
+  replicas: 1
+  tls: {}
+---
+apiVersion: registry.mgoltzsche.github.com/v1alpha1
+kind: ImagePushSecret
+metadata:
+  name: example
+spec:
+  registryRef:
+    name: registry
