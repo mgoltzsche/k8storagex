@@ -1,0 +1,7 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: host-directory
+provisioner: storage-provisioner.mgoltzsche.github.com/host-directory-provisioner
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer

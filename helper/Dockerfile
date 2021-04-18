@@ -1,4 +1,4 @@
-ARG BUILDAH_VERSION=v1.18.0
+ARG BUILDAH_VERSION=v1.19.6
 
 FROM golang:1.14-alpine3.12 AS buildah
 RUN apk add --update --no-cache bash git make gcc pkgconf musl-dev \
@@ -6,8 +6,8 @@ RUN apk add --update --no-cache bash git make gcc pkgconf musl-dev \
 	btrfs-progs btrfs-progs-dev libassuan-dev lvm2-dev device-mapper ostree-dev
 ARG BUILDAH_VERSION
 # TODO: use regular buildah release when https://github.com/containers/buildah/pull/2879 is merged
-#RUN git clone --branch ${BUILDAH_VERSION} https://github.com/containers/buildah $GOPATH/src/github.com/containers/buildah
-RUN git clone --branch rmi_prune_fix https://github.com/mgoltzsche/buildah $GOPATH/src/github.com/containers/buildah
+RUN git clone --branch ${BUILDAH_VERSION} https://github.com/containers/buildah $GOPATH/src/github.com/containers/buildah
+#RUN git clone --branch rmi_prune_fix https://github.com/mgoltzsche/buildah $GOPATH/src/github.com/containers/buildah
 WORKDIR $GOPATH/src/github.com/containers/buildah
 RUN set -ex; \
 	GIT_COMMIT="`git rev-parse --short HEAD`"; \

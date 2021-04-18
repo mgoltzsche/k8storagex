@@ -1,0 +1,108 @@
+apiVersion: cache-provisioner.mgoltzsche.github.com/v1alpha1
+kind: StorageProvisioner
+metadata:
+  name: cache-provisioner
+spec:
+  name: storage-provisioner.mgoltzsche.github.com/cache-provisioner
+  env:
+  - annotation: cache-provisioner.mgoltzsche.github.com/cache-name
+    name: DCOWFS_NAME
+  containers:
+    provisioner:
+      command:
+      - /bin/sh
+      - -c
+      - |
+        set -eux
+        [ ! "$$DOCKER_REGISTRY" ] || export DCOWFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        dcowfs mount "$$VOLUME_DIR" --mode=0777
+    deprovisioner:
+      command:
+      - /bin/sh
+      - -c
+      - |
+        set -eux
+        [ ! "$$DOCKER_REGISTRY" ] || export DCOWFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        dcowfs umount "$$VOLUME_DIR" --commit
+  podTemplate:
+    nodeName: "${STORAGE_NODE_NAME}"
+    serviceAccount: storage-manager
+    containers:
+    - name: main
+      # TODO: fix this: provisioner images setters are not contained within rendered output - but managerImage setter is for some reason
+      image: mgoltzsche/dcowfs:latest # {"$kpt-set":"provisionerImage"}
+      imagePullPolicy: IfNotPresent
+      securityContext:
+        privileged: true
+        hostPID: true
+      env:
+      - name: VOLUME_DIR
+        value: "${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}"
+      - name: DCOWFS_ENABLE_K8S_SYNC
+        value: "true"
+      - name: DCOWFS_INSECURE_SKIP_TLS_VERIFY
+        value: "true"
+      - name: DOCKER_REGISTRY
+        valueFrom:
+          secretKeyRef:
+            name: imagepushsecret-cache-registry
+            key: registry
+            optional: true
+      - name: DCOWFS_REGISTRY_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: imagepushsecret-cache-registry
+            key: username
+            optional: true
+      - name: DCOWFS_REGISTRY_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: imagepushsecret-cache-registry
+            key: password
+            optional: true
+      - name: DCOWFS_STORAGE_ROOT
+        value: "${STORAGE_NODE_PATH}/.cache"
+      - name: DCOWFS_NODE_NAME
+        value: "${STORAGE_NODE_NAME}"
+      - name: DCOWFS_NAMESPACE
+        value: "${STORAGE_PVC_NAMESPACE}"
+      - name: DCOWFS_CONTAINER_NAME
+        value: "${STORAGE_PV_NAME}"
+      volumeMounts:
+      - name: data
+        mountPath: "${STORAGE_NODE_PATH}"
+        mountPropagation: Bidirectional
+      - name: registry-config
+        mountPath: "/registry"
+        readOnly: true
+    volumes:
+    - name: data
+      hostPath:
+        path: "${STORAGE_NODE_PATH}"
+        type: DirectoryOrCreate
+    - name: registry-config
+      secret:
+        secretName: imagepushsecret-cache-registry
+        defaultMode: 0400
+        optional: true
+  persistentVolumeTemplate:
+    volumeMode: Filesystem
+    accessModes:
+    - ReadWriteOnce
+    persistentVolumeReclaimPolicy: Delete
+    hostPath:
+      path: "${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}"
+      type: Directory
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - "${STORAGE_NODE_NAME}"
+  nodes:
+  - name: minikube
+    path: "/data/cache-provisioner"
+  - name: "*"
+    path: "/var/cache-provisioner"

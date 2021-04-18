@@ -1,0 +1,51 @@
+apiVersion: cache-provisioner.mgoltzsche.github.com/v1alpha1
+kind: StorageProvisioner
+metadata:
+  name: host-directory-provisioner
+spec:
+  name: storage-provisioner.mgoltzsche.github.com/host-directory-provisioner
+  containers:
+    provisioner:
+      command: ["mkdir", "-m", "0777", "${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}"]
+    deprovisioner:
+      command: ["rm", "-rf", "${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}"]
+  podTemplate:
+    nodeName: "${STORAGE_NODE_NAME}"
+    automountServiceAccountToken: false
+    containers:
+    - name: main
+      image: alpine:3.13
+      imagePullPolicy: IfNotPresent
+      securityContext:
+        privileged: true
+      volumeMounts:
+      - name: hostdir
+        mountPath: "${STORAGE_NODE_PATH}"
+    volumes:
+    - name: hostdir
+      hostPath:
+        path: "${STORAGE_NODE_PATH}"
+        type: DirectoryOrCreate
+  persistentVolumeTemplate:
+    volumeMode: Filesystem
+    accessModes:
+    - ReadWriteOnce
+    persistentVolumeReclaimPolicy: Delete
+    #capacity:
+    #storage: "${STORAGE_CAPACITY}"
+    hostPath:
+      path: "${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}"
+      type: Directory
+    nodeAffinity:
+      required:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - "${STORAGE_NODE_NAME}"
+  nodes:
+  - name: minikube
+    path: "/data/hostdir-provisioner"
+  - name: "*"
+    path: "/var/hostdir-provisioner"

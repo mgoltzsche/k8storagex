@@ -1,3 +1,4 @@
+namePrefix: storage-
 resources:
 - role.yaml
 - role_binding.yaml

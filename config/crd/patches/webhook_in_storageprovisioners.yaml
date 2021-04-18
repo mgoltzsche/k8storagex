@@ -1,0 +1,14 @@
+# The following patch enables a conversion webhook for the CRD
+apiVersion: apiextensions.k8s.io/v1 # The following patch enables a conversion webhook for the CRD
+kind: CustomResourceDefinition
+metadata:
+  name: storageprovisioners.cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com
+spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          namespace: system
+          name: webhook-service
+          path: /convert

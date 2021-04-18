@@ -21,10 +21,13 @@ import (
 )
 
 const (
-	CachePhaseReady   CachePhase = "ready"
-	CachePhaseReject  CachePhase = "reject"
-	VolumePhaseMount             = "mount"
-	VolumePhaseCommit            = "commit"
+	CachePhaseReady       CachePhase = "ready"
+	CachePhaseReject      CachePhase = "reject"
+	VolumePhaseMount                 = "mount"
+	VolumePhaseCommit                = "commit"
+	CacheFinalizer                   = "cache-provisioner.mgoltzsche.github.com/finalizer"
+	ConditionStorageReset            = "StorageReset"
+	ConditionPodsCleared             = "PodsCleared"
 )
 
 type VolumePhase string
@@ -47,10 +50,14 @@ type CacheStatus struct {
 	LastImageID     *string      `json:"lastImageID,omitempty"`
 	LastUsed        *metav1.Time `json:"lastUsed,omitempty"`
 	LastWritten     *metav1.Time `json:"lastWritten,omitempty"`
+	LastReset       *ResetStatus `json:"lastReset,omitempty"`
 	Used            int64        `json:"used"`
 	//LastWrittenByPersistentVolumeClaim string       `json:"lastWrittenByPersistentVolumeClaim,omitempty"`
 	Nodes []NodeStatus `json:"nodes,omitempty"`
 	Phase CachePhase   `json:"phase,omitempty"`
+	// Conditions represent the latest available observations of a Cache's current state.
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // NodeStatus defines the observed state of a cache on a node
@@ -77,6 +84,11 @@ type VolumeStatus struct {
 	Created         metav1.Time  `json:"created"`
 	Committable     bool         `json:"committable,omitempty"`
 	CommitStartTime *metav1.Time `json:"commitStartTime,omitempty"`
+}
+
+type ResetStatus struct {
+	CacheGeneration int64       `json:"cacheGeneration"`
+	ResetTime       metav1.Time `json:"resetTime"`
 }
 
 // +kubebuilder:object:root=true

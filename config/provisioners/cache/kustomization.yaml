@@ -1,0 +1,3 @@
+resources:
+- provisioner.yaml
+- storageclass.yaml

@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: test-job1
+  name: test-cached1-job
 spec:
   backoffLimit: 0
   template:
@@ -30,12 +30,12 @@ spec:
       volumes:
       - name: cache
         persistentVolumeClaim:
-          claimName: test-pvc1
+          claimName: test-cached1-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: test-pvc1
+  name: test-cached1-pvc
   annotations:
     cache-provisioner.mgoltzsche.github.com/cache-name: test-project
 spec:

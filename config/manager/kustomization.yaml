@@ -1,4 +1,6 @@
+namePrefix: storage-
 resources:
+- serviceaccount.yaml
 - manager.yaml
 commonLabels:
   app.kubernetes.io/component: cache-manager

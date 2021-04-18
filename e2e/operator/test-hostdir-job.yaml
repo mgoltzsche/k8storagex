@@ -2,15 +2,15 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: test-job2
+  name: test-hostdir-job
 spec:
   backoffLimit: 0
   template:
     spec:
       restartPolicy: Never
       securityContext:
-        runAsUser: 9000
-        runAsGroup: 9000
+        runAsUser: 5000
+        runAsGroup: 5000
       containers:
       - name: build
         image: alpine:3.13
@@ -18,21 +18,24 @@ spec:
         args:
         - |
             set -ex
-            cat /cache/date
+            ls -la $DATADIR
+            mktemp -d -p $DATADIR
+            date > $DATADIR/date
+        env:
+        - name: DATADIR
+          value: /data
         volumeMounts:
-        - mountPath: /cache
-          name: cache
+        - mountPath: /data
+          name: hostdir
       volumes:
-      - name: cache
+      - name: hostdir
         persistentVolumeClaim:
-          claimName: test-pvc2
+          claimName: test-hostdir-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: test-pvc2
-  annotations:
-    cache-provisioner.mgoltzsche.github.com/cache-name: test-project
+  name: test-hostdir-pvc
 spec:
   accessModes:
     - ReadWriteOnce
@@ -40,4 +43,4 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  storageClassName: cache
+  storageClassName: host-directory

@@ -1,0 +1,18 @@
+apiVersion: kpt.dev/v1alpha1
+kind: Kptfile
+metadata:
+  name: storage-provisioner-manager-registry
+packageMetadata:
+  shortDescription: sample description
+openAPI:
+  definitions:
+    io.k8s.cli.setters.manager-image:
+      x-k8s-cli:
+        setter:
+          name: manager-image
+          value: mgoltzsche/cache-manager:latest
+    io.k8s.cli.setters.provisioner-image:
+      x-k8s-cli:
+        setter:
+          name: provisioner-image
+          value: mgoltzsche/dcowfs:latest

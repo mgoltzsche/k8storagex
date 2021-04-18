@@ -6,3 +6,4 @@
 ./testmount
 cmd/*/*
 !cmd/*/*.go
+e2e

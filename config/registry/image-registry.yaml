@@ -1,7 +1,8 @@
 apiVersion: registry.mgoltzsche.github.com/v1alpha1
 kind: ImageRegistry
 metadata:
-  name: registry
+  name: cache-registry
+  namespace: cache-storage
 spec:
   replicas: 1
   tls: {}
@@ -16,7 +17,8 @@ spec:
 apiVersion: registry.mgoltzsche.github.com/v1alpha1
 kind: ImagePushSecret
 metadata:
-  name: example
+  name: cache-registry
+  namespace: cache-storage
 spec:
   registryRef:
-    name: registry
+    name: cache-registry

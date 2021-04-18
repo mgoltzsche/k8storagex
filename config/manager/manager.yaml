@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cache-controller-manager
+  name: controller-manager
   labels:
     control-plane: controller-manager
 spec:
@@ -9,25 +9,26 @@ spec:
     matchLabels:
       control-plane: controller-manager
   replicas: 1
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
         control-plane: controller-manager
     spec:
-      serviceAccountName: cache-manager
+      serviceAccountName: manager
       securityContext:
         runAsUser: 65532
       containers:
-      - command:
-        - /manager
+      - name: manager
+        image: mgoltzsche/cache-manager:latest
         args:
-        - "--config=controller_manager_config.yaml"
-        volumeMounts:
-        - name: manager-config
-          mountPath: /controller_manager_config.yaml
-          subPath: controller_manager_config.yaml
-        image: mgoltzsche/cache-manager:0.0.1
-        name: manager
+        - -zap-log-level=debug
+        env:
+        - name: MANAGER_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
@@ -50,7 +51,3 @@ spec:
             cpu: 100m
             memory: 20Mi
       terminationGracePeriodSeconds: 10
-      volumes:
-      - name: manager-config
-        configMap:
-          name: manager-config

@@ -1,0 +1,4 @@
+resources:
+- ../default
+- github.com/mgoltzsche/image-registry-operator//deploy/cluster-wide
+- image-registry.yaml

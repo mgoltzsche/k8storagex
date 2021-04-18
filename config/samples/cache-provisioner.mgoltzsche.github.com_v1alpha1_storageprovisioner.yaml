@@ -1,0 +1,7 @@
+apiVersion: cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com/v1alpha1
+kind: StorageProvisioner
+metadata:
+  name: storageprovisioner-sample
+spec:
+  # Add fields here
+  foo: bar

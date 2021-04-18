@@ -1,7 +1,10 @@
 # Current Operator version
-VERSION ?= 0.0.0
+VERSION ?= 0.0.0-dev
+# Image registry used for all images
+IMAGE_REGISTRY ?= localhost
+
 # Default bundle image tag
-BUNDLE_IMG ?= controller-bundle:$(VERSION)
+BUNDLE_IMG ?= $(IMAGE_REGISTRY)/cache-manager-bundle:$(VERSION)
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
@@ -12,7 +15,8 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Image URL to use all building/pushing image targets
-IMG ?= mgoltzsche/cache-manager:$(VERSION)
+MANAGER_IMG_NAME ?= mgoltzsche/cache-manager
+MANAGER_IMG := $(IMAGE_REGISTRY)/$(MANAGER_IMG_NAME):$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -32,20 +36,20 @@ KPT = $(BIN_DIR)/kpt
 
 MANAGER_BUILD_TAGS ?=
 
-DCOWFS_IMG ?= mgoltzsche/dcowfs:$(VERSION)
+DCOWFS_IMG_NAME ?= mgoltzsche/dcowfs
+DCOWFS_IMG := $(IMAGE_REGISTRY)/$(DCOWFS_IMG_NAME):$(VERSION)
 DCOWFS_BUILD_TAGS ?= exclude_graphdriver_devicemapper exclude_graphdriver_btrfs btrfs_noversion containers_image_ostree_stub containers_image_openpgp
 
 BUILD_TAGS ?= $(DCOWFS_BUILD_TAGS) $(MANAGER_BUILD_TAGS)
 
-STATIC_MANIFESTS = default minikube
+STATIC_MANIFESTS = default registry
 DEPLOY_TARGETS = $(addprefix deploy-,$(STATIC_MANIFESTS))
 UNDEPLOY_TARGETS = $(addprefix undeploy-,$(STATIC_MANIFESTS))
 
 
 all: manager dcowfs
 
-static-manifests: manifests
-	kpt fn run --network config
+deploy-minikube: minikube-load-images deploy-registry
 
 $(DEPLOY_TARGETS): deploy-%:
 	kpt live apply config/static/$*
@@ -85,10 +89,15 @@ test-dcowfs: dcowfs-image $(BATS)
 
 test-operator: $(BATS)
 	@printf '\nRUNNING OPERATOR E2E TESTS...\n\n'
-	kubectl wait --for condition=available --timeout 60s -n cache-storage deploy/cache-pvc-remover-controller-manager deploy/cache-local-path-provisioner
+	#kubectl wait --for condition=available --timeout 60s -n cache-storage deploy/cache-pvc-remover-controller-manager deploy/cache-local-path-provisioner
+	set -e; \
+	export NAMESPACE=storage-testns-`date +'%Y%m%d%H%M%S'` PATH="$(BIN_DIR):$$PATH"; \
+	kubectl create namespace $$NAMESPACE; \
 	echo; \
-	export PATH="$(BIN_DIR):$$PATH"; \
-	$(BATS) -T ./e2e/operator
+	STATUS=0; \
+	$(BATS) -T ./e2e/operator || STATUS=1; \
+	kubectl delete namespace $$NAMESPACE; \
+	exit $$STATUS
 
 clean:
 	rm -rf build
@@ -104,7 +113,16 @@ manager: generate fmt vet
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
-	go run ./main.go
+	go run ./cmd/manager/main.go
+
+static-manifests: manifests | $(KPT)
+	$(KPT) fn run --network config
+	for MANIFEST in default registry; do \
+		rm -f config/static/$$MANIFEST/Kptfile; \
+		$(KPT) pkg init config/static/$$MANIFEST --name storage-provisioner-manager-$$MANIFEST; \
+		$(KPT) cfg create-setter config/static/$$MANIFEST manager-image $(MANAGER_IMG_NAME):latest --field="image"; \
+		$(KPT) cfg create-setter config/static/$$MANIFEST provisioner-image $(DCOWFS_IMG_NAME):latest --field="image"; \
+	done
 
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
@@ -123,16 +141,16 @@ vet:
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
-docker-build:
-	docker build -t ${IMG} .
+# Build the manager docker image
+manager-image:
+	docker build -t ${MANAGER_IMG} .
 
 # Push the docker image
 docker-push:
-	docker push ${IMG}
+	docker push ${MANAGER_IMG}
 
 kind-load-images: dcowfs-image docker-build
-	kind load docker-image ${IMG}
+	kind load docker-image ${MANAGER_IMG}
 	kind load docker-image ${DCOWFS_IMG}
 
 # Download controller-gen locally if necessary
@@ -192,7 +210,7 @@ endef
 .PHONY: bundle
 bundle: manifests kustomize
 	operator-sdk generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMG)
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(MANAGER_IMG)
 	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
@@ -204,5 +222,12 @@ bundle-build:
 minikube-start:
 	minikube start --kubernetes-version=1.20.5 --network-plugin=cni --enable-default-cni --container-runtime=cri-o --bootstrapper=kubeadm
 
-minikube-load-images: dcowfs-image
-	minikube image load $(DCOWFS_IMG)
+minikube-load-images: manager-image dcowfs-image | $(KPT)
+	$(eval MANAGER_SHA=$(shell docker images --filter=reference=$(MANAGER_IMG) --format "{{.ID}}"))
+	$(eval DCOWFS_SHA=$(shell docker images --filter=reference=$(DCOWFS_IMG) --format "{{.ID}}"))
+	docker tag $(MANAGER_IMG) $(MANAGER_IMG)-$(MANAGER_SHA)
+	docker tag $(DCOWFS_IMG) $(DCOWFS_IMG)-$(DCOWFS_SHA)
+	minikube image load $(MANAGER_IMG)-$(MANAGER_SHA)
+	minikube image load $(DCOWFS_IMG)-$(DCOWFS_SHA)
+	$(KPT) cfg set config/static/registry manager-image $(MANAGER_IMG)-$(MANAGER_SHA)
+	$(KPT) cfg set config/static/registry provisioner-image $(DCOWFS_IMG)-$(DCOWFS_SHA)

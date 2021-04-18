@@ -2,8 +2,10 @@ namespace: cache-storage
 commonLabels:
   app: cache-provisioner
 bases:
+- namespace.yaml
 - ../crd
-- ../local-path-provisioner
 - ../rbac
 - ../pvc-remover
 - ../manager
+- ../provisioners/cache
+- ../provisioners/host-directory

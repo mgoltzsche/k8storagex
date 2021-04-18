@@ -1,0 +1,24 @@
+# permissions for end users to edit storageprovisioners.
+apiVersion: rbac.authorization.k8s.io/v1 # permissions for end users to edit storageprovisioners.
+kind: ClusterRole
+metadata:
+  name: storageprovisioner-editor-role
+rules:
+- apiGroups:
+  - cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com
+  resources:
+  - storageprovisioners
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com
+  resources:
+  - storageprovisioners/status
+  verbs:
+  - get
