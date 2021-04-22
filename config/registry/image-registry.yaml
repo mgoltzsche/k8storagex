@@ -7,7 +7,7 @@ spec:
   replicas: 1
   tls: {}
   persistentVolumeClaim:
-    storageClassName: standard
+    storageClassName: host-directory
     accessModes:
     - ReadWriteOnce
     resources:
