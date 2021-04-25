@@ -1,4 +1,4 @@
-package dcowfs
+package layerfs
 
 import (
 	"context"
@@ -26,14 +26,14 @@ import (
 
 type Store interface {
 	Free()
-	Mount(CacheMountOptions) (dir string, err error)
-	Unmount(CacheMountOptions) (imageID string, newImage bool, err error)
+	Mount(MountOptions) (dir string, err error)
+	Unmount(MountOptions) (imageID string, newImage bool, err error)
 	Prune(context.Context) error
 }
 
 var _ Store = &store{}
 
-type CacheMountOptions struct {
+type MountOptions struct {
 	Context        context.Context
 	Image          string
 	ContainerName  string
@@ -43,7 +43,7 @@ type CacheMountOptions struct {
 	CacheNamespace string
 }
 
-func (o *CacheMountOptions) validate() error {
+func (o *MountOptions) validate() error {
 	if o.Image == "" && o.CacheName == "" {
 		return errors.Errorf("neither cache name nor image specified")
 	}
@@ -55,7 +55,7 @@ func (o *CacheMountOptions) validate() error {
 	return nil
 }
 
-func (o *CacheMountOptions) containerName() (string, error) {
+func (o *MountOptions) containerName() (string, error) {
 	if o.ContainerName != "" {
 		return o.ContainerName, nil
 	}
@@ -86,7 +86,7 @@ func (s *store) Free() {
 	s.store.Free()
 }
 
-func (s *store) Mount(opts CacheMountOptions) (dir string, err error) {
+func (s *store) Mount(opts MountOptions) (dir string, err error) {
 	if err = opts.validate(); err != nil {
 		return "", err
 	}
@@ -170,7 +170,7 @@ func (s *store) Mount(opts CacheMountOptions) (dir string, err error) {
 	return dir, err
 }
 
-func (s *store) newBuilder(opts CacheMountOptions, name, imageName string, pullPolicy buildah.PullPolicy) (*buildah.Builder, error) {
+func (s *store) newBuilder(opts MountOptions, name, imageName string, pullPolicy buildah.PullPolicy) (*buildah.Builder, error) {
 	builderOpts := buildah.BuilderOptions{
 		Container:        name,
 		FromImage:        imageName,
@@ -183,7 +183,7 @@ func (s *store) newBuilder(opts CacheMountOptions, name, imageName string, pullP
 	return buildah.NewBuilder(opts.Context, s.store, builderOpts)
 }
 
-func (s *store) Unmount(opts CacheMountOptions) (imageID string, newImage bool, err error) {
+func (s *store) Unmount(opts MountOptions) (imageID string, newImage bool, err error) {
 	if err = opts.validate(); err != nil {
 		return "", false, err
 	}
@@ -311,7 +311,7 @@ func (s *store) commit(ctx context.Context, builder *buildah.Builder, imgRef typ
 	return imageID, nil, false, nil
 }
 
-func (s *store) imageRef(o *CacheMountOptions) (imgRef types.ImageReference, err error) {
+func (s *store) imageRef(o *MountOptions) (imgRef types.ImageReference, err error) {
 	if o.Image == "" {
 		if o.CacheName == "" || o.CacheNamespace == "" {
 			return nil, fmt.Errorf("cache name and namespace must be specified")
@@ -327,6 +327,6 @@ func (s *store) storeImageRef(name string) (types.ImageReference, error) {
 	return imgstorage.Transport.ParseStoreReference(s.store, name)
 }
 
-func localImageName(o *CacheMountOptions) string {
+func localImageName(o *MountOptions) string {
 	return fmt.Sprintf("localhost/cache/%s/%s:latest", o.CacheNamespace, o.CacheName)
 }

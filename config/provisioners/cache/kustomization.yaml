@@ -1,3 +1,9 @@
 resources:
 - provisioner.yaml
 - storageclass.yaml
+images:
+- name: mgoltzsche/layerfs
+  newName: docker.io/mgoltzsche/layerfs
+  newTag: latest
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization

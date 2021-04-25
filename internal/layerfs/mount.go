@@ -1,4 +1,4 @@
-package dcowfs
+package layerfs
 
 import (
 	"github.com/pkg/errors"

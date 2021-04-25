@@ -8058,7 +8058,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: mgoltzsche/cache-manager:latest # {"$kpt-set":"manager-image"}
+        image: docker.io/mgoltzsche/cache-manager:latest # {"$kpt-set":"manager-image"}
         livenessProbe:
           httpGet:
             path: /healthz
@@ -8127,19 +8127,19 @@ spec:
       - -c
       - |
         set -eux
-        [ ! "$$DOCKER_REGISTRY" ] || export DCOWFS_REGISTRY="docker://$$DOCKER_REGISTRY"
-        dcowfs umount "$$VOLUME_DIR" --commit
+        [ ! "$$DOCKER_REGISTRY" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        layerfs umount "$$VOLUME_DIR" --commit
     provisioner:
       command:
       - /bin/sh
       - -c
       - |
         set -eux
-        [ ! "$$DOCKER_REGISTRY" ] || export DCOWFS_REGISTRY="docker://$$DOCKER_REGISTRY"
-        dcowfs mount "$$VOLUME_DIR" --mode=0777
+        [ ! "$$DOCKER_REGISTRY" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        layerfs mount "$$VOLUME_DIR" --mode=0777
   env:
   - annotation: cache-provisioner.mgoltzsche.github.com/cache-name
-    name: DCOWFS_NAME
+    name: LAYERFS_NAME
   name: storage-provisioner.mgoltzsche.github.com/cache-provisioner
   nodes:
   - name: minikube
@@ -8167,9 +8167,9 @@ spec:
     - env:
       - name: VOLUME_DIR
         value: ${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}
-      - name: DCOWFS_ENABLE_K8S_SYNC
+      - name: LAYERFS_ENABLE_K8S_SYNC
         value: "true"
-      - name: DCOWFS_INSECURE_SKIP_TLS_VERIFY
+      - name: LAYERFS_INSECURE_SKIP_TLS_VERIFY
         value: "true"
       - name: DOCKER_REGISTRY
         valueFrom:
@@ -8177,27 +8177,27 @@ spec:
             key: registry
             name: imagepushsecret-cache-registry
             optional: true
-      - name: DCOWFS_REGISTRY_USERNAME
+      - name: LAYERFS_REGISTRY_USERNAME
         valueFrom:
           secretKeyRef:
             key: username
             name: imagepushsecret-cache-registry
             optional: true
-      - name: DCOWFS_REGISTRY_PASSWORD
+      - name: LAYERFS_REGISTRY_PASSWORD
         valueFrom:
           secretKeyRef:
             key: password
             name: imagepushsecret-cache-registry
             optional: true
-      - name: DCOWFS_STORAGE_ROOT
+      - name: LAYERFS_STORAGE_ROOT
         value: ${STORAGE_NODE_PATH}/.cache
-      - name: DCOWFS_NODE_NAME
+      - name: LAYERFS_NODE_NAME
         value: ${STORAGE_NODE_NAME}
-      - name: DCOWFS_NAMESPACE
+      - name: LAYERFS_NAMESPACE
         value: ${STORAGE_PVC_NAMESPACE}
-      - name: DCOWFS_CONTAINER_NAME
+      - name: LAYERFS_CONTAINER_NAME
         value: ${STORAGE_PV_NAME}
-      image: mgoltzsche/dcowfs:latest # {"$kpt-set":"provisioner-image"}
+      image: docker.io/mgoltzsche/layerfs:latest # {"$kpt-set":"provisioner-image"}
       imagePullPolicy: IfNotPresent
       name: main
       securityContext:

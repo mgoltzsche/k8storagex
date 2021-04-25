@@ -10,9 +10,9 @@ openAPI:
       x-k8s-cli:
         setter:
           name: manager-image
-          value: mgoltzsche/cache-manager:latest
+          value: docker.io/mgoltzsche/cache-manager:latest
     io.k8s.cli.setters.provisioner-image:
       x-k8s-cli:
         setter:
           name: provisioner-image
-          value: mgoltzsche/dcowfs:latest
+          value: docker.io/mgoltzsche/layerfs:latest

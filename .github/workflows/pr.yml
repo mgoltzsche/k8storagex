@@ -1,0 +1,51 @@
+name: Build & Test
+
+on:
+  # Trigger the workflow on push or pull request on master branch
+  pull_request:
+    branches:
+    - master
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set up Go 1.15
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.15
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12
+
+    - name: Install semantic-release
+      run: npm install semantic-release@17.4.2 @semantic-release/exec@5.0.0 @semantic-release/git@9.0.0
+
+    - name: Release eventually
+      run: npx semantic-release
+
+
+    - name: Build & test binaries
+      run: make all test
+
+    - name: Build images
+      run: make images
+
+    - name: Generate static manifests
+      run: make static-manifests
+
+    - name: Test e2e
+      run: make test-e2e-minikube
+
+    - name: Require git tracked files to be unchanged
+      run: make check-repo-unchanged

@@ -69,13 +69,13 @@ make generate manifests static-manifests
 ### Build
 Build binaries:
 ```sh
-make dcowfs manager
+make layerfs manager
 ```
 
 ### Test
-Test dcowfs binary:
+Test layerfs binary:
 ```sh
-make test-dcowfs
+make test-layerfs
 ```
 
 ### Load images into kind cluster

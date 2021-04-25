@@ -6,7 +6,7 @@ spec:
   name: storage-provisioner.mgoltzsche.github.com/cache-provisioner
   env:
   - annotation: cache-provisioner.mgoltzsche.github.com/cache-name
-    name: DCOWFS_NAME
+    name: LAYERFS_NAME
   containers:
     provisioner:
       command:
@@ -14,23 +14,23 @@ spec:
       - -c
       - |
         set -eux
-        [ ! "$$DOCKER_REGISTRY" ] || export DCOWFS_REGISTRY="docker://$$DOCKER_REGISTRY"
-        dcowfs mount "$$VOLUME_DIR" --mode=0777
+        [ ! "$$DOCKER_REGISTRY" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        layerfs mount "$$VOLUME_DIR" --mode=0777
     deprovisioner:
       command:
       - /bin/sh
       - -c
       - |
         set -eux
-        [ ! "$$DOCKER_REGISTRY" ] || export DCOWFS_REGISTRY="docker://$$DOCKER_REGISTRY"
-        dcowfs umount "$$VOLUME_DIR" --commit
+        [ ! "$$DOCKER_REGISTRY" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        layerfs umount "$$VOLUME_DIR" --commit
   podTemplate:
     nodeName: "${STORAGE_NODE_NAME}"
     serviceAccount: storage-manager
     containers:
     - name: main
       # TODO: fix this: provisioner images setters are not contained within rendered output - but managerImage setter is for some reason
-      image: mgoltzsche/dcowfs:latest # {"$kpt-set":"provisionerImage"}
+      image: mgoltzsche/layerfs:latest # {"$kpt-set":"provisionerImage"}
       imagePullPolicy: IfNotPresent
       securityContext:
         privileged: true
@@ -38,9 +38,9 @@ spec:
       env:
       - name: VOLUME_DIR
         value: "${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}"
-      - name: DCOWFS_ENABLE_K8S_SYNC
+      - name: LAYERFS_ENABLE_K8S_SYNC
         value: "true"
-      - name: DCOWFS_INSECURE_SKIP_TLS_VERIFY
+      - name: LAYERFS_INSECURE_SKIP_TLS_VERIFY
         value: "true"
       - name: DOCKER_REGISTRY
         valueFrom:
@@ -48,25 +48,25 @@ spec:
             name: imagepushsecret-cache-registry
             key: registry
             optional: true
-      - name: DCOWFS_REGISTRY_USERNAME
+      - name: LAYERFS_REGISTRY_USERNAME
         valueFrom:
           secretKeyRef:
             name: imagepushsecret-cache-registry
             key: username
             optional: true
-      - name: DCOWFS_REGISTRY_PASSWORD
+      - name: LAYERFS_REGISTRY_PASSWORD
         valueFrom:
           secretKeyRef:
             name: imagepushsecret-cache-registry
             key: password
             optional: true
-      - name: DCOWFS_STORAGE_ROOT
+      - name: LAYERFS_STORAGE_ROOT
         value: "${STORAGE_NODE_PATH}/.cache"
-      - name: DCOWFS_NODE_NAME
+      - name: LAYERFS_NODE_NAME
         value: "${STORAGE_NODE_NAME}"
-      - name: DCOWFS_NAMESPACE
+      - name: LAYERFS_NAMESPACE
         value: "${STORAGE_PVC_NAMESPACE}"
-      - name: DCOWFS_CONTAINER_NAME
+      - name: LAYERFS_CONTAINER_NAME
         value: "${STORAGE_PV_NAME}"
       volumeMounts:
       - name: data

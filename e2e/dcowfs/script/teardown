@@ -1,7 +1,0 @@
-#!/bin/sh
-
-export DCOWFS_NAME="${PVC_ANNOTATION_CACHE_NAME:-`echo "$PVC_NAME" | sed -E 's/^(.+)-[^-]+$/\1/'`}"
-export DCOWFS_NAMESPACE="$PVC_NAMESPACE"
-export DCOWFS_CONTAINER_NAME="`basename "$VOL_DIR"`"
-export DCOWFS_STORAGE_ROOT="`dirname "$VOL_DIR"`/.cache"
-dcowfs umount "$VOL_DIR" --commit
