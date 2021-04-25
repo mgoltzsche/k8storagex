@@ -25,10 +25,7 @@ jobs:
         fetch-depth: 0
 
     - name: Test
-      run: make all test static-manifest test-e2e-minikube
-
-    - name: Log into GitHub registry
-      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
+      run: make all test static-manifest test-e2e-kind
 
     - name: Log into DockerHub registry
       run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login docker.io -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin

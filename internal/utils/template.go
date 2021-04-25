@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 
-	"github.com/mgoltzsche/cache-provisioner/internal/template"
+	"github.com/mgoltzsche/k8storagex/internal/template"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 )

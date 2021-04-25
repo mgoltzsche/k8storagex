@@ -5,7 +5,7 @@ metadata:
   name: storageprovisioner-viewer-role
 rules:
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com
+  - k8storagex.mgoltzsche.github.com.k8storagex.mgoltzsche.github.com
   resources:
   - storageprovisioners
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com
+  - k8storagex.mgoltzsche.github.com.k8storagex.mgoltzsche.github.com
   resources:
   - storageprovisioners/status
   verbs:

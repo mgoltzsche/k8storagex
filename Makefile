@@ -4,7 +4,7 @@ VERSION ?= latest
 IMAGE_REGISTRY ?= docker.io
 
 # Default bundle image tag
-BUNDLE_IMG ?= $(IMAGE_REGISTRY)/cache-manager-bundle:$(VERSION)
+BUNDLE_IMG ?= $(IMAGE_REGISTRY)/k8storagex-manager-bundle:$(VERSION)
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
@@ -15,7 +15,7 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Image URL to use all building/pushing image targets
-MANAGER_IMG_NAME ?= mgoltzsche/cache-manager
+MANAGER_IMG_NAME ?= mgoltzsche/k8storagex-controller-manager
 MANAGER_IMG = $(IMAGE_REGISTRY)/$(MANAGER_IMG_NAME):$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
@@ -37,7 +37,7 @@ KPT = $(BIN_DIR)/kpt
 
 MANAGER_BUILD_TAGS ?=
 
-LAYERFS_IMG_NAME ?= mgoltzsche/layerfs
+LAYERFS_IMG_NAME ?= mgoltzsche/k8storagex-layerfs
 LAYERFS_IMG = $(IMAGE_REGISTRY)/$(LAYERFS_IMG_NAME):$(VERSION)
 LAYERFS_BUILD_TAGS ?= exclude_graphdriver_devicemapper exclude_graphdriver_btrfs btrfs_noversion containers_image_ostree_stub containers_image_openpgp
 
@@ -59,8 +59,6 @@ deploy-minikube deploy-kind: deploy-%: images dev-manifests | $(KPT)
 	docker tag $(MANAGER_IMG) $(MANAGER_IMG)-$(MANAGER_SHA)
 	docker tag $(LAYERFS_IMG) $(LAYERFS_IMG)-$(LAYERFS_SHA)
 	make $*-load-images MANAGER_IMG=$(MANAGER_IMG)-$(MANAGER_SHA) LAYERFS_IMG=$(LAYERFS_IMG)-$(LAYERFS_SHA)
-	#minikube image load $(MANAGER_IMG)-$(MANAGER_SHA)
-	#minikube image load $(LAYERFS_IMG)-$(LAYERFS_SHA)
 	$(KPT) cfg set $(DEV_MANIFEST_DIR) manager-image $(MANAGER_IMG)-$(MANAGER_SHA)
 	$(KPT) cfg set $(DEV_MANIFEST_DIR) provisioner-image $(LAYERFS_IMG)-$(LAYERFS_SHA)
 	$(KPT) live apply $(DEV_MANIFEST_DIR)
@@ -76,16 +74,6 @@ $(UNDEPLOY_TARGETS): undeploy-%:
 	$(KPT) live status --poll-until=deleted --timeout=60s config/static/$* & \
 	$(KPT) live destroy config/static/$* && wait
 
-install-buildah: legacy-helper-image
-	CID=`docker create local/buildah-helper` && \
-	docker cp $$CID:/usr/bin/buildah /usr/local/bin/buildah; \
-	STATUS=$$?; \
-	docker rm $$CID; \
-	exit $$STATUS
-
-legacy-helper-image:
-	docker build -t local/buildah-helper -f helper/Dockerfile helper
-
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: generate fmt vet manifests
@@ -98,12 +86,12 @@ layerfs: fmt vet
 layerfs-image:
 	docker build -t $(LAYERFS_IMG) -f Dockerfile-layerfs .
 
-release: check-version all test images static-manifests minikube-start minikube-load-images deploy-registry test-e2e minikube-delete docker-push
+release: check-version all test images static-manifests kind-create kind-load-images deploy-registry test-e2e kind-delete docker-push
 
 check-version:
 	@! test "$(VERSION)" = latest || (echo no VERSION specified >&2; false)
 
-test-e2e-minikube: minikube-start deploy-minikube test-e2e minikube-delete
+test-e2e-kind: kind-create deploy-kind test-e2e kind-delete
 
 test-e2e: test-layerfs test-manager
 
@@ -113,7 +101,7 @@ test-layerfs: layerfs-image $(BATS)
 
 test-manager: $(BATS)
 	@printf '\nRUNNING MANAGER E2E TESTS...\n\n'
-	#kubectl wait --for condition=available --timeout 60s -n cache-storage deploy/cache-pvc-remover-controller-manager deploy/cache-local-path-provisioner
+	kubectl -n k8storagex wait --for condition=Ready --timeout=60s imagepushsecret/cache-registry
 	set -e; \
 	export NAMESPACE=storage-testns-`date +'%Y%m%d%H%M%S'` PATH="$(BIN_DIR):$$PATH"; \
 	kubectl create namespace $$NAMESPACE; \
@@ -145,7 +133,7 @@ static-manifests: manifests set-kustomization-images | $(KPT)
 	$(KPT) fn run --network config
 	for MANIFEST in default registry; do \
 		rm -f config/static/$$MANIFEST/Kptfile; \
-		$(KPT) pkg init config/static/$$MANIFEST --name storage-provisioner-manager-$$MANIFEST; \
+		$(KPT) pkg init config/static/$$MANIFEST --name k8storagex-$$MANIFEST; \
 		$(KPT) cfg create-setter config/static/$$MANIFEST manager-image $(MANAGER_IMG) --field="image"; \
 		$(KPT) cfg create-setter config/static/$$MANIFEST provisioner-image $(LAYERFS_IMG) --field="image"; \
 	done
@@ -156,6 +144,7 @@ manifests: controller-gen kustomize
 
 dev-manifests:
 	rm -rf $(DEV_MANIFEST_DIR)
+	mkdir -p `dirname $(DEV_MANIFEST_DIR)`
 	cp -r config/static/registry $(DEV_MANIFEST_DIR)
 
 set-kustomization-images:
@@ -177,7 +166,7 @@ fmt:
 	go fmt ./internal/...
 
 # Run go vet against code
-vet:
+vet: clean-test-storage
 	go vet -tags "$(BUILD_TAGS)" ./...
 
 # Generate code

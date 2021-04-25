@@ -4,7 +4,7 @@ resources:
 - image-registry.yaml
 patchesJson6902:
 - target:
-    group: cache-provisioner.mgoltzsche.github.com
+    group: k8storagex.mgoltzsche.github.com
     version: v1alpha1
     kind: StorageProvisioner
     name: cache-provisioner

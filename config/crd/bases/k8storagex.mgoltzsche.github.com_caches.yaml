@@ -4,9 +4,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
-  name: caches.cache-provisioner.mgoltzsche.github.com
+  name: caches.k8storagex.mgoltzsche.github.com
 spec:
-  group: cache-provisioner.mgoltzsche.github.com
+  group: k8storagex.mgoltzsche.github.com
   names:
     kind: Cache
     listKind: CacheList

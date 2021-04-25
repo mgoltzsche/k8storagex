@@ -3,7 +3,7 @@ package utils
 import (
 	"encoding/json"
 
-	storageapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
+	storageapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
 	"github.com/pkg/errors"
 )
 

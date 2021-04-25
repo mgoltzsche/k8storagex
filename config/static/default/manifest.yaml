@@ -2,8 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    app: cache-provisioner
-  name: cache-storage
+    app: k8storagex
+  name: k8storagex
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -12,10 +12,10 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
   labels:
-    app: cache-provisioner
-  name: caches.cache-provisioner.mgoltzsche.github.com
+    app: k8storagex
+  name: caches.k8storagex.mgoltzsche.github.com
 spec:
-  group: cache-provisioner.mgoltzsche.github.com
+  group: k8storagex.mgoltzsche.github.com
   names:
     kind: Cache
     listKind: CacheList
@@ -235,10 +235,10 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
   labels:
-    app: cache-provisioner
-  name: storageprovisioners.cache-provisioner.mgoltzsche.github.com
+    app: k8storagex
+  name: storageprovisioners.k8storagex.mgoltzsche.github.com
 spec:
-  group: cache-provisioner.mgoltzsche.github.com
+  group: k8storagex.mgoltzsche.github.com
   names:
     kind: StorageProvisioner
     listKind: StorageProvisionerList
@@ -7648,8 +7648,8 @@ kind: ClusterRole
 metadata:
   creationTimestamp: null
   labels:
-    app: cache-provisioner
-  name: storage-manager-role
+    app: k8storagex
+  name: k8storagex-manager-role
 rules:
 - apiGroups:
   - ""
@@ -7658,58 +7658,6 @@ rules:
   verbs:
   - create
   - patch
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - caches
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - caches/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - caches/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - storageprovisioners
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - storageprovisioners/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - storageprovisioners/status
-  verbs:
-  - get
-  - patch
-  - update
 - apiGroups:
   - ""
   resources:
@@ -7771,6 +7719,58 @@ rules:
   - list
   - watch
 - apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - caches
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - caches/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - caches/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - storageprovisioners
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - storageprovisioners/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - storageprovisioners/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - storage.k8s.io
   resources:
   - storageclasses
@@ -7783,24 +7783,24 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
-    app: cache-provisioner
-  name: storage-manager-rolebinding
+    app: k8storagex
+  name: k8storagex-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: storage-manager-role
+  name: k8storagex-manager-role
 subjects:
 - kind: ServiceAccount
-  name: storage-manager
-  namespace: cache-storage
+  name: k8storagex-manager
+  namespace: k8storagex
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
-    app: cache-provisioner
-  name: storage-leader-election-role
-  namespace: cache-storage
+    app: k8storagex
+  name: k8storagex-leader-election-role
+  namespace: k8storagex
 rules:
 - apiGroups:
   - ""
@@ -7828,35 +7828,35 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
-    app: cache-provisioner
-  name: storage-leader-election-rolebinding
-  namespace: cache-storage
+    app: k8storagex
+  name: k8storagex-leader-election-rolebinding
+  namespace: k8storagex
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: storage-leader-election-role
+  name: k8storagex-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: storage-manager
-  namespace: cache-storage
+  name: k8storagex-manager
+  namespace: k8storagex
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app: cache-provisioner
-    app.kubernetes.io/component: cache-pvc-remover
-  name: cache-pvc-remover-controller-manager
-  namespace: cache-storage
+    app: k8storagex
+    app.kubernetes.io/component: k8storagex-pvc-remover
+  name: k8storagex-committer-pvc-remover-controller-manager
+  namespace: k8storagex
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   creationTimestamp: null
   labels:
-    app: cache-provisioner
-    app.kubernetes.io/component: cache-pvc-remover
-  name: cache-pvc-remover-manager-role
+    app: k8storagex
+    app.kubernetes.io/component: k8storagex-pvc-remover
+  name: k8storagex-committer-pvc-remover-manager-role
 rules:
 - apiGroups:
   - ""
@@ -7906,26 +7906,26 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
-    app: cache-provisioner
-    app.kubernetes.io/component: cache-pvc-remover
-  name: cache-pvc-remover-manager-rolebinding
+    app: k8storagex
+    app.kubernetes.io/component: k8storagex-pvc-remover
+  name: k8storagex-committer-pvc-remover-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cache-pvc-remover-manager-role
+  name: k8storagex-committer-pvc-remover-manager-role
 subjects:
 - kind: ServiceAccount
-  name: cache-pvc-remover-controller-manager
-  namespace: cache-storage
+  name: k8storagex-committer-pvc-remover-controller-manager
+  namespace: k8storagex
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
-    app: cache-provisioner
-    app.kubernetes.io/component: cache-pvc-remover
-  name: cache-pvc-remover-leader-election-role
-  namespace: cache-storage
+    app: k8storagex
+    app.kubernetes.io/component: k8storagex-pvc-remover
+  name: k8storagex-committer-pvc-remover-leader-election-role
+  namespace: k8storagex
 rules:
 - apiGroups:
   - ""
@@ -7959,40 +7959,40 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
-    app: cache-provisioner
-    app.kubernetes.io/component: cache-pvc-remover
-  name: cache-pvc-remover-leader-election-rolebinding
-  namespace: cache-storage
+    app: k8storagex
+    app.kubernetes.io/component: k8storagex-pvc-remover
+  name: k8storagex-committer-pvc-remover-leader-election-rolebinding
+  namespace: k8storagex
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: cache-pvc-remover-leader-election-role
+  name: k8storagex-committer-pvc-remover-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: cache-pvc-remover-controller-manager
-  namespace: cache-storage
+  name: k8storagex-committer-pvc-remover-controller-manager
+  namespace: k8storagex
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: cache-provisioner
-    app.kubernetes.io/component: cache-pvc-remover
+    app: k8storagex
+    app.kubernetes.io/component: k8storagex-pvc-remover
     control-plane: controller-manager
-  name: cache-pvc-remover-controller-manager
-  namespace: cache-storage
+  name: k8storagex-committer-pvc-remover-controller-manager
+  namespace: k8storagex
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cache-provisioner
-      app.kubernetes.io/component: cache-pvc-remover
+      app: k8storagex
+      app.kubernetes.io/component: k8storagex-pvc-remover
       control-plane: controller-manager
   template:
     metadata:
       labels:
-        app: cache-provisioner
-        app.kubernetes.io/component: cache-pvc-remover
+        app: k8storagex
+        app.kubernetes.io/component: k8storagex-pvc-remover
         control-plane: controller-manager
     spec:
       containers:
@@ -8013,41 +8013,41 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
-      serviceAccountName: cache-pvc-remover-controller-manager
+      serviceAccountName: k8storagex-committer-pvc-remover-controller-manager
       terminationGracePeriodSeconds: 10
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
-    app: cache-provisioner
-    app.kubernetes.io/component: cache-manager
-  name: storage-manager
-  namespace: cache-storage
+    app: k8storagex
+    app.kubernetes.io/component: k8storagex-manager
+  name: k8storagex-manager
+  namespace: k8storagex
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: cache-provisioner
-    app.kubernetes.io/component: cache-manager
+    app: k8storagex
+    app.kubernetes.io/component: k8storagex-manager
     control-plane: controller-manager
-  name: storage-controller-manager
-  namespace: cache-storage
+  name: k8storagex-controller-manager
+  namespace: k8storagex
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cache-provisioner
-      app.kubernetes.io/component: cache-manager
+      app: k8storagex
+      app.kubernetes.io/component: k8storagex-manager
       control-plane: controller-manager
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: cache-provisioner
-        app.kubernetes.io/component: cache-manager
+        app: k8storagex
+        app.kubernetes.io/component: k8storagex-manager
         control-plane: controller-manager
     spec:
       containers:
@@ -8058,7 +8058,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        image: docker.io/mgoltzsche/cache-manager:latest # {"$kpt-set":"manager-image"}
+        image: docker.io/mgoltzsche/k8storagex-controller-manager:latest # {"$kpt-set":"manager-image"}
         livenessProbe:
           httpGet:
             path: /healthz
@@ -8083,7 +8083,7 @@ spec:
           allowPrivilegeEscalation: false
       securityContext:
         runAsUser: 65532
-      serviceAccountName: storage-manager
+      serviceAccountName: k8storagex-manager
       terminationGracePeriodSeconds: 10
 ---
 apiVersion: v1
@@ -8107,18 +8107,18 @@ data:
 kind: ConfigMap
 metadata:
   labels:
-    app: cache-provisioner
-    app.kubernetes.io/component: cache-manager
-  name: storage-manager-config
-  namespace: cache-storage
+    app: k8storagex
+    app.kubernetes.io/component: k8storagex-manager
+  name: k8storagex-manager-config
+  namespace: k8storagex
 ---
-apiVersion: cache-provisioner.mgoltzsche.github.com/v1alpha1
+apiVersion: k8storagex.mgoltzsche.github.com/v1alpha1
 kind: StorageProvisioner
 metadata:
   labels:
-    app: cache-provisioner
+    app: k8storagex
   name: cache-provisioner
-  namespace: cache-storage
+  namespace: k8storagex
 spec:
   containers:
     deprovisioner:
@@ -8127,7 +8127,7 @@ spec:
       - -c
       - |
         set -eux
-        [ ! "$$DOCKER_REGISTRY" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        [ ! "$${DOCKER_REGISTRY:-}" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
         layerfs umount "$$VOLUME_DIR" --commit
     provisioner:
       command:
@@ -8135,17 +8135,19 @@ spec:
       - -c
       - |
         set -eux
-        [ ! "$$DOCKER_REGISTRY" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        [ ! "$${DOCKER_REGISTRY:-}" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
         layerfs mount "$$VOLUME_DIR" --mode=0777
   env:
-  - annotation: cache-provisioner.mgoltzsche.github.com/cache-name
+  - annotation: k8storagex.mgoltzsche.github.com/cache-name
     name: LAYERFS_NAME
-  name: storage-provisioner.mgoltzsche.github.com/cache-provisioner
+  name: k8storagex.mgoltzsche.github.com/cache-provisioner
   nodes:
   - name: minikube
-    path: /data/cache-provisioner
+    path: /data/k8storagex/cache-provisioner
+  - name: kind-control-plane
+    path: /var/opt/k8storagex/cache-provisioner
   - name: '*'
-    path: /var/cache-provisioner
+    path: /var/opt/k8storagex/cache-provisioner
   persistentVolumeTemplate:
     accessModes:
     - ReadWriteOnce
@@ -8197,7 +8199,7 @@ spec:
         value: ${STORAGE_PVC_NAMESPACE}
       - name: LAYERFS_CONTAINER_NAME
         value: ${STORAGE_PV_NAME}
-      image: docker.io/mgoltzsche/layerfs:latest # {"$kpt-set":"provisioner-image"}
+      image: docker.io/mgoltzsche/k8storagex-layerfs:latest # {"$kpt-set":"provisioner-image"}
       imagePullPolicy: IfNotPresent
       name: main
       securityContext:
@@ -8211,7 +8213,7 @@ spec:
         name: registry-config
         readOnly: true
     nodeName: ${STORAGE_NODE_NAME}
-    serviceAccount: storage-manager
+    serviceAccount: k8storagex-manager
     volumes:
     - hostPath:
         path: ${STORAGE_NODE_PATH}
@@ -8227,19 +8229,19 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   labels:
-    app: cache-provisioner
+    app: k8storagex
   name: cache
-provisioner: storage-provisioner.mgoltzsche.github.com/cache-provisioner
+provisioner: k8storagex.mgoltzsche.github.com/cache-provisioner
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer
 ---
-apiVersion: cache-provisioner.mgoltzsche.github.com/v1alpha1
+apiVersion: k8storagex.mgoltzsche.github.com/v1alpha1
 kind: StorageProvisioner
 metadata:
   labels:
-    app: cache-provisioner
+    app: k8storagex
   name: host-directory-provisioner
-  namespace: cache-storage
+  namespace: k8storagex
 spec:
   containers:
     deprovisioner:
@@ -8253,12 +8255,14 @@ spec:
       - -m
       - "0777"
       - ${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}
-  name: storage-provisioner.mgoltzsche.github.com/host-directory-provisioner
+  name: k8storagex.mgoltzsche.github.com/host-directory-provisioner
   nodes:
   - name: minikube
-    path: /data/hostdir-provisioner
+    path: /data/k8storagex/hostdir-provisioner
+  - name: kind-control-plane
+    path: /var/opt/k8storagex/hostdir-provisioner
   - name: '*'
-    path: /var/hostdir-provisioner
+    path: /var/opt/k8storagex/hostdir-provisioner
   persistentVolumeTemplate:
     accessModes:
     - ReadWriteOnce
@@ -8299,8 +8303,8 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   labels:
-    app: cache-provisioner
+    app: k8storagex
   name: host-directory
-provisioner: storage-provisioner.mgoltzsche.github.com/host-directory-provisioner
+provisioner: k8storagex.mgoltzsche.github.com/host-directory-provisioner
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer

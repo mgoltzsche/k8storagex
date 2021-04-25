@@ -3,7 +3,7 @@ package ksync
 import (
 	"fmt"
 
-	"github.com/mgoltzsche/cache-provisioner/internal/layerfs"
+	"github.com/mgoltzsche/k8storagex/internal/layerfs"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

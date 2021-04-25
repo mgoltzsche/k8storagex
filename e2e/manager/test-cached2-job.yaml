@@ -32,7 +32,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: test-cached2-pvc
   annotations:
-    cache-provisioner.mgoltzsche.github.com/cache-name: test-project
+    k8storagex.mgoltzsche.github.com/cache-name: test-project
 spec:
   accessModes:
     - ReadWriteOnce

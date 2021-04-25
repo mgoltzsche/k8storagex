@@ -1,4 +1,4 @@
-apiVersion: cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com/v1alpha1
+apiVersion: k8storagex.mgoltzsche.github.com.k8storagex.mgoltzsche.github.com/v1alpha1
 kind: StorageProvisioner
 metadata:
   name: storageprovisioner-sample

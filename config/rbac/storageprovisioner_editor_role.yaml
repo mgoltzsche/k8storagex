@@ -5,7 +5,7 @@ metadata:
   name: storageprovisioner-editor-role
 rules:
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com
+  - k8storagex.mgoltzsche.github.com.k8storagex.mgoltzsche.github.com
   resources:
   - storageprovisioners
   verbs:
@@ -17,7 +17,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com
+  - k8storagex.mgoltzsche.github.com.k8storagex.mgoltzsche.github.com
   resources:
   - storageprovisioners/status
   verbs:

@@ -21,4 +21,4 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on \
 
 FROM alpine:3.12
 COPY --from=builder /workspace/layerfs /usr/bin/layerfs
-COPY helper/policy.json /etc/containers/
+COPY policy.json /etc/containers/

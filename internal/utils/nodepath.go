@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	storageapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
+	storageapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
 )
 
 func StorageRootPathForNode(nodeName string, mapping []storageapi.NodePath) (string, error) {

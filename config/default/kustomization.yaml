@@ -1,6 +1,6 @@
-namespace: cache-storage
+namespace: k8storagex
 commonLabels:
-  app: cache-provisioner
+  app: k8storagex
 bases:
 - namespace.yaml
 - ../crd

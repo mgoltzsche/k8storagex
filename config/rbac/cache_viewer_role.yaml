@@ -4,7 +4,7 @@ metadata:
   name: cache-viewer-role
 rules:
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
+  - k8storagex.mgoltzsche.github.com
   resources:
   - caches
   verbs:
@@ -12,7 +12,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
+  - k8storagex.mgoltzsche.github.com
   resources:
   - caches/status
   verbs:

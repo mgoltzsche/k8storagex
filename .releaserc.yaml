@@ -2,7 +2,7 @@
 # (installation: `npm install -g semantic-release @semantic-release/exec`, run: `npx semantic-release`).
 # The tool creates a new release if the branch contains e.g. BREAKING CHANGE|feat|fix commits since the last release, following the Angular Commit Message Conventions.
 # Commits that don't match the message convention or don't introduce user-facing changes will not trigger the creation of a new release.
-repositoryUrl: https://github.com/mgoltzsche/cache-provisioner.git
+repositoryUrl: https://github.com/mgoltzsche/k8storagex.git
 branches:
 - master
 tagFormat: v${version}

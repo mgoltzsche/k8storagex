@@ -1,9 +1,9 @@
-apiVersion: cache-provisioner.mgoltzsche.github.com/v1alpha1
+apiVersion: k8storagex.mgoltzsche.github.com/v1alpha1
 kind: StorageProvisioner
 metadata:
   name: host-directory-provisioner
 spec:
-  name: storage-provisioner.mgoltzsche.github.com/host-directory-provisioner
+  name: k8storagex.mgoltzsche.github.com/host-directory-provisioner
   containers:
     provisioner:
       command: ["mkdir", "-m", "0777", "${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}"]
@@ -46,6 +46,8 @@ spec:
             - "${STORAGE_NODE_NAME}"
   nodes:
   - name: minikube
-    path: "/data/hostdir-provisioner"
+    path: "/data/k8storagex/hostdir-provisioner"
+  - name: kind-control-plane
+    path: "/var/opt/k8storagex/hostdir-provisioner"
   - name: "*"
-    path: "/var/hostdir-provisioner"
+    path: "/var/opt/k8storagex/hostdir-provisioner"

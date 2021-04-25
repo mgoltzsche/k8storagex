@@ -12,58 +12,6 @@ rules:
   - create
   - patch
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - caches
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - caches/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - caches/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - storageprovisioners
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - storageprovisioners/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
-  resources:
-  - storageprovisioners/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
   - ""
   resources:
   - persistentvolumeclaims
@@ -123,6 +71,58 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - caches
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - caches/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - caches/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - storageprovisioners
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - storageprovisioners/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - k8storagex.mgoltzsche.github.com
+  resources:
+  - storageprovisioners/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - storage.k8s.io
   resources:

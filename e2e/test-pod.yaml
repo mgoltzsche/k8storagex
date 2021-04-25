@@ -43,7 +43,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: build-cache
   annotations:
-    cache-provisioner.mgoltzsche.github.com/cache-name: example-project
+    k8storagex.mgoltzsche.github.com/cache-name: example-project
 spec:
   accessModes:
     - ReadWriteOnce

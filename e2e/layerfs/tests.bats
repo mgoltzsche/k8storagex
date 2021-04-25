@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-IMAGE="${IMAGE:-cache-provisioner}"
+IMAGE="${IMAGE:-k8storagex}"
 VOLDIR=pv-xyz1_test-namespace_pvc-xyz
 EXPECTED_CONTENT="testcontent"
 

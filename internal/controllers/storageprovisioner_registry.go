@@ -8,8 +8,8 @@ import (
 	"sync"
 
 	"github.com/go-logr/logr"
-	storageapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
-	"github.com/mgoltzsche/cache-provisioner/internal/utils"
+	storageapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
+	"github.com/mgoltzsche/k8storagex/internal/utils"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"

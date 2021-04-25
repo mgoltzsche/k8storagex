@@ -4,4 +4,4 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
-  name: storageprovisioners.cache-provisioner.mgoltzsche.github.com.cache-provisioner.mgoltzsche.github.com
+  name: storageprovisioners.k8storagex.mgoltzsche.github.com.k8storagex.mgoltzsche.github.com

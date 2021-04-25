@@ -1,4 +1,4 @@
-# storage-provisioner-manager-default
+# k8storagex-default
 
 ## Description
 sample description
@@ -6,24 +6,24 @@ sample description
 ## Usage
 
 ### Fetch the package
-`kpt pkg get REPO_URI[.git]/PKG_PATH[@VERSION] storage-provisioner-manager-default`
+`kpt pkg get REPO_URI[.git]/PKG_PATH[@VERSION] k8storagex-default`
 Details: https://googlecontainertools.github.io/kpt/reference/pkg/get/
 
 ### View package content
-`kpt cfg tree storage-provisioner-manager-default`
+`kpt cfg tree k8storagex-default`
 Details: https://googlecontainertools.github.io/kpt/reference/cfg/tree/
 
 ### List setters
-`kpt cfg list-setters storage-provisioner-manager-default`
+`kpt cfg list-setters k8storagex-default`
 Details: https://googlecontainertools.github.io/kpt/reference/cfg/list-setters/
 
 ### Set a value
-`kpt cfg set storage-provisioner-manager-default NAME VALUE`
+`kpt cfg set k8storagex-default NAME VALUE`
 Details: https://googlecontainertools.github.io/kpt/reference/cfg/set/
 
 ### Apply the package
 ```
-kpt live init storage-provisioner-manager-default
-kpt live apply storage-provisioner-manager-default --reconcile-timeout=2m --output=table
+kpt live init k8storagex-default
+kpt live apply k8storagex-default --reconcile-timeout=2m --output=table
 ```
 Details: https://googlecontainertools.github.io/kpt/reference/live/

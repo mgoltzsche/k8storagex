@@ -1,11 +1,11 @@
-apiVersion: cache-provisioner.mgoltzsche.github.com/v1alpha1
+apiVersion: k8storagex.mgoltzsche.github.com/v1alpha1
 kind: StorageProvisioner
 metadata:
   name: cache-provisioner
 spec:
-  name: storage-provisioner.mgoltzsche.github.com/cache-provisioner
+  name: k8storagex.mgoltzsche.github.com/cache-provisioner
   env:
-  - annotation: cache-provisioner.mgoltzsche.github.com/cache-name
+  - annotation: k8storagex.mgoltzsche.github.com/cache-name
     name: LAYERFS_NAME
   containers:
     provisioner:
@@ -14,7 +14,7 @@ spec:
       - -c
       - |
         set -eux
-        [ ! "$$DOCKER_REGISTRY" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        [ ! "$${DOCKER_REGISTRY:-}" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
         layerfs mount "$$VOLUME_DIR" --mode=0777
     deprovisioner:
       command:
@@ -22,15 +22,14 @@ spec:
       - -c
       - |
         set -eux
-        [ ! "$$DOCKER_REGISTRY" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
+        [ ! "$${DOCKER_REGISTRY:-}" ] || export LAYERFS_REGISTRY="docker://$$DOCKER_REGISTRY"
         layerfs umount "$$VOLUME_DIR" --commit
   podTemplate:
     nodeName: "${STORAGE_NODE_NAME}"
-    serviceAccount: storage-manager
+    serviceAccount: k8storagex-manager
     containers:
     - name: main
-      # TODO: fix this: provisioner images setters are not contained within rendered output - but managerImage setter is for some reason
-      image: mgoltzsche/layerfs:latest # {"$kpt-set":"provisionerImage"}
+      image: mgoltzsche/k8storagex-layerfs:latest
       imagePullPolicy: IfNotPresent
       securityContext:
         privileged: true
@@ -103,6 +102,8 @@ spec:
             - "${STORAGE_NODE_NAME}"
   nodes:
   - name: minikube
-    path: "/data/cache-provisioner"
+    path: "/data/k8storagex/cache-provisioner"
+  - name: kind-control-plane
+    path: "/var/opt/k8storagex/cache-provisioner"
   - name: "*"
-    path: "/var/cache-provisioner"
+    path: "/var/opt/k8storagex/cache-provisioner"

@@ -1,4 +1,4 @@
-namePrefix: storage-
+namePrefix: k8storagex-
 resources:
 - role.yaml
 - role_binding.yaml

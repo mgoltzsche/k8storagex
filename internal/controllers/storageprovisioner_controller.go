@@ -20,8 +20,8 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	storageapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
-	"github.com/mgoltzsche/cache-provisioner/internal/utils"
+	storageapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
+	"github.com/mgoltzsche/k8storagex/internal/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -49,9 +49,9 @@ func (r *StorageProvisionerReconciler) SetupWithManager(mgr ctrl.Manager) error 
 		Complete(r)
 }
 
-// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com,resources=storageprovisioners,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com,resources=storageprovisioners/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com,resources=storageprovisioners/finalizers,verbs=update
+// +kubebuilder:rbac:groups=k8storagex.mgoltzsche.github.com,resources=storageprovisioners,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=k8storagex.mgoltzsche.github.com,resources=storageprovisioners/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=k8storagex.mgoltzsche.github.com,resources=storageprovisioners/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

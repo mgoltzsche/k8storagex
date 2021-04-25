@@ -21,8 +21,8 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	storageapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
-	"github.com/mgoltzsche/cache-provisioner/internal/utils"
+	storageapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
+	"github.com/mgoltzsche/k8storagex/internal/utils"
 	corev1 "k8s.io/api/core/v1"
 	storage "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,12 +37,12 @@ import (
 
 const (
 	provisioner               = "provisioner"
-	annPVCName                = "cache-provisioner.mgoltzsche.github.com/pvc-name"
-	annPVCNamespace           = "cache-provisioner.mgoltzsche.github.com/pvc-namespace"
+	annPVCName                = "k8storagex.mgoltzsche.github.com/pvc-name"
+	annPVCNamespace           = "k8storagex.mgoltzsche.github.com/pvc-namespace"
 	annStorageProvisioner     = "volume.beta.kubernetes.io/storage-provisioner"
-	annStorageProvisionerSpec = "cache-provisioner.mgoltzsche.github.com/provisioner-spec"
+	annStorageProvisionerSpec = "k8storagex.mgoltzsche.github.com/provisioner-spec"
 	annSelectedNode           = "volume.kubernetes.io/selected-node"
-	finalizer                 = "cache-provisioner.mgoltzsche.github.com/finalizer"
+	finalizer                 = "k8storagex.mgoltzsche.github.com/finalizer"
 	finalizerPVProtection     = "kubernetes.io/pv-protection"
 	KeyNode                   = "kubernetes.io/hostname"
 )
@@ -245,6 +245,9 @@ func (r *PersistentVolumeClaimReconciler) provision(ctx context.Context, claim *
 			}
 			utils.CopyAnnotations(claim, pod, provisionerSpec.Spec.Env)
 			pod.Annotations[annStorageProvisionerSpec], err = utils.StorageProvisionerToJSON(provisionerSpec)
+
+			r.recorder.Event(claim, corev1.EventTypeNormal, "Provisioning", "Provisioning PersistentVolume")
+
 			return pod, nil
 		},
 		OnCompleted: func(pod *corev1.Pod) (done bool, err error) {

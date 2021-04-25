@@ -1,6 +1,6 @@
-namePrefix: cache-
+namePrefix: k8storagex-committer-
 commonLabels:
-  app.kubernetes.io/component: cache-pvc-remover
+  app.kubernetes.io/component: k8storagex-pvc-remover
 resources:
 - github.com/mgoltzsche/pvc-remover/config/cluster-wide?ref=v0.1.1
 patchesStrategicMerge:
