@@ -21,7 +21,7 @@ spec:
         runAsUser: 65532
       containers:
       - name: manager
-        image: mgoltzsche/cache-manager:latest
+        image: mgoltzsche/k8storagex-controller-manager:latest
         args:
         - -zap-log-level=debug
         env:

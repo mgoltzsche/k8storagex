@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-IMAGE="${IMAGE:-cache-provisioner}"
+IMAGE="${IMAGE:-k8storagex}"
 VOLDIR=pv-xyz1_test-namespace_pvc-xyz
 EXPECTED_CONTENT="testcontent"
 
@@ -13,41 +13,38 @@ setup() {
 	fi
 }
 
-# ARGS: SCRIPT
-runScript() {
+# ARGS: COMMAND
+runContainer() {
 	mkdir -p testmount
 	docker run --rm --privileged --network=host \
-		-e VOL_DIR=/data/$VOLDIR \
-		-e VOL_NAME=pv-xyz \
-		-e VOL_SIZE_BYTES=12345678 \
-		-e PVC_NAME=pvc-xyz \
-		-e PVC_NAMESPACE=test-namespace \
-		-e PVC_ANNOTATION_CACHE_NAME=test-cache \
-		-e DCOWFS_REGISTRY=$TEST_REGISTRY \
-		-e DCOWFS_REGISTRY_USERNAME=testuser \
-		-e DCOWFS_REGISTRY_PASSWORD=testpass \
-		-e DCOWFS_REGISTRIES_CONF_PATH=/registries-config.json \
-		-e DCOWFS_INSECURE_SKIP_TLS_VERIFY=true \
+		-e LAYERFS_NAME="test-cache" \
+		-e LAYERFS_NAMESPACE=test-namespace \
+		-e LAYERFS_CONTAINER_NAME=$VOLDIR \
+		-e LAYERFS_STORAGE_ROOT=/data/.cache \
+		-e LAYERFS_REGISTRY=$TEST_REGISTRY \
+		-e LAYERFS_REGISTRY_USERNAME=testuser \
+		-e LAYERFS_REGISTRY_PASSWORD=testpass \
+		-e LAYERFS_REGISTRIES_CONF_PATH=/registries-config.json \
+		-e LAYERFS_INSECURE_SKIP_TLS_VERIFY=true \
 		--mount "type=bind,source=`pwd`/registries-config.json,target=/registries-config.json" \
 		--mount "type=bind,source=`pwd`/script,target=/script" \
 		--mount "type=bind,source=`pwd`/testmount,target=/data,bind-propagation=rshared" \
-		--entrypoint=/bin/sh \
 		"$IMAGE" \
 		"$@"
 }
 
-@test "setup should create volume [$TEST_REGISTRY]" {
-	runScript /script/setup
+@test "mount should create writeable dir [$TEST_REGISTRY]" {
+	runContainer layerfs mount /data/$VOLDIR --mode=0777
 	echo "$EXPECTED_CONTENT" > testmount/$VOLDIR/testfile
 	ls -la testmount/$VOLDIR
 }
 
-@test "teardown should remove volume [$TEST_REGISTRY]" {
-	runScript /script/teardown
+@test "umount should remove volume dir [$TEST_REGISTRY]" {
+	runContainer layerfs umount /data/$VOLDIR --commit
 	[ ! -d testmount/$VOLDIR ] || (echo fail: volume should be removed >&2; false)
 }
 
-@test "subsequent setup should restore volume [$TEST_REGISTRY]" {
+@test "mount should restore previous volume contents [$TEST_REGISTRY]" {
 	if [ "$TEST_REGISTRY" ]; then
 		# Delete local storage when testing against a registry
 		docker run --rm --privileged --mount "type=bind,src=`pwd`,dst=/data" \
@@ -58,10 +55,10 @@ runScript() {
 
 	VOLDIR=pv-xyz2_test-namespace_pvc-xyz
 
-	runScript /script/setup
+	runContainer layerfs mount /data/$VOLDIR --mode=0777
 
 	CONTENT="$(cat testmount/$VOLDIR/testfile)"
 	[ "$CONTENT" = "$EXPECTED_CONTENT" ] || (echo fail: volume should return what was last written into that cache key >&2; false)
 
-	runScript /script/teardown
+	runContainer layerfs umount /data/$VOLDIR --commit
 }

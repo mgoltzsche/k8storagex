@@ -1,4 +1,14 @@
 resources:
 - ../default
-- github.com/mgoltzsche/image-registry-operator//deploy/cluster-wide
+- github.com/mgoltzsche/image-registry-operator//deploy/cluster-wide?ref=v0.1.0
 - image-registry.yaml
+patchesJson6902:
+- target:
+    group: k8storagex.mgoltzsche.github.com
+    version: v1alpha1
+    kind: StorageProvisioner
+    name: cache-provisioner
+  patch: |-
+    - op: replace
+      path: /spec/podTemplate/volumes/1/secret/optional
+      value: false

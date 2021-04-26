@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: test-cached2-job
+  name: test-cached1-job
 spec:
   backoffLimit: 0
   template:
@@ -18,21 +18,26 @@ spec:
         args:
         - |
             set -ex
-            cat /cache/date
+            ls -la $CACHEDIR
+            mktemp -d -p $CACHEDIR
+            ([ -f $CACHEDIR/date ] || date > $CACHEDIR/date) && cat $CACHEDIR/date
+        env:
+        - name: CACHEDIR
+          value: /cache
         volumeMounts:
         - mountPath: /cache
           name: cache
       volumes:
       - name: cache
         persistentVolumeClaim:
-          claimName: test-cached2-pvc
+          claimName: test-cached1-pvc
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: test-cached2-pvc
+  name: test-cached1-pvc
   annotations:
-    cache-provisioner.mgoltzsche.github.com/cache-name: test-project
+    k8storagex.mgoltzsche.github.com/cache-name: test-project
 spec:
   accessModes:
     - ReadWriteOnce

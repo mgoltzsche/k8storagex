@@ -12,8 +12,8 @@ import (
 
 var (
 	rootCmd = &cobra.Command{
-		Use:           "dcowfs",
-		Short:         "A distributed, layered, container storage based cache",
+		Use:           "layerfs",
+		Short:         "A tool to u/mount a container image to a directory and push changes to it as new image.",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
@@ -24,18 +24,18 @@ var (
 			}
 		},
 	}
-	envStorageRoot       = "DCOWFS_STORAGE_ROOT"
-	envStorageRunRoot    = "DCOWFS_STORAGE_RUNROOT"
-	envRegistry          = "DCOWFS_REGISTRY"
-	envRegistryUsername  = "DCOWFS_REGISTRY_USERNAME"
-	envRegistryPassword  = "DCOWFS_REGISTRY_PASSWORD"
-	envInsecure          = "DCOWFS_INSECURE_SKIP_TLS_VERIFY"
-	envEnableK8sSync     = "DCOWFS_ENABLE_K8S_SYNC"
-	envNodeName          = "DCOWFS_NODE_NAME"
-	envCacheName         = "DCOWFS_NAME"
-	envCacheNamespace    = "DCOWFS_NAMESPACE"
-	envCacheImage        = "DCOWFS_IMAGE"
-	envContainerName     = "DCOWFS_CONTAINER_NAME"
+	envStorageRoot       = "LAYERFS_STORAGE_ROOT"
+	envStorageRunRoot    = "LAYERFS_STORAGE_RUNROOT"
+	envRegistry          = "LAYERFS_REGISTRY"
+	envRegistryUsername  = "LAYERFS_REGISTRY_USERNAME"
+	envRegistryPassword  = "LAYERFS_REGISTRY_PASSWORD"
+	envInsecure          = "LAYERFS_INSECURE_SKIP_TLS_VERIFY"
+	envEnableK8sSync     = "LAYERFS_ENABLE_K8S_SYNC"
+	envNodeName          = "LAYERFS_NODE_NAME"
+	envCacheName         = "LAYERFS_NAME"
+	envCacheNamespace    = "LAYERFS_NAMESPACE"
+	envCacheImage        = "LAYERFS_IMAGE"
+	envContainerName     = "LAYERFS_CONTAINER_NAME"
 	debugFlag            bool
 	storageRootFlag      = os.Getenv(envStorageRoot)
 	storageRunRootFlag   = os.Getenv(envStorageRunRoot)

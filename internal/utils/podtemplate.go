@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	storageapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
-	"github.com/mgoltzsche/cache-provisioner/internal/template"
+	storageapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
+	"github.com/mgoltzsche/k8storagex/internal/template"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"

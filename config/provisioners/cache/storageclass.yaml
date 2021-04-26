@@ -2,6 +2,6 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: cache
-provisioner: storage-provisioner.mgoltzsche.github.com/cache-provisioner
+provisioner: k8storagex.mgoltzsche.github.com/cache-provisioner
 reclaimPolicy: Delete
 volumeBindingMode: WaitForFirstConsumer

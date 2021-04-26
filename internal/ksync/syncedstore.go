@@ -3,18 +3,18 @@ package ksync
 import (
 	"fmt"
 
-	"github.com/mgoltzsche/cache-provisioner/internal/dcowfs"
+	"github.com/mgoltzsche/k8storagex/internal/layerfs"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type synchronizedStore struct {
-	dcowfs.Store
+	layerfs.Store
 	cluster  *Updater
 	nodeName string
 }
 
-func Synchronized(store dcowfs.Store, client client.Client, nodeName string) dcowfs.Store {
+func Synchronized(store layerfs.Store, client client.Client, nodeName string) layerfs.Store {
 	return &synchronizedStore{
 		Store:    store,
 		cluster:  &Updater{client: client},
@@ -22,7 +22,7 @@ func Synchronized(store dcowfs.Store, client client.Client, nodeName string) dco
 	}
 }
 
-func (s *synchronizedStore) Mount(opts dcowfs.CacheMountOptions) (dir string, err error) {
+func (s *synchronizedStore) Mount(opts layerfs.MountOptions) (dir string, err error) {
 	// TODO: change CLI to provide cache name instead of image
 	if opts.CacheName == "" || opts.CacheNamespace == "" {
 		return "", fmt.Errorf("no cache name or namespace provided")
@@ -40,7 +40,7 @@ func (s *synchronizedStore) Mount(opts dcowfs.CacheMountOptions) (dir string, er
 	return s.Store.Mount(opts)
 }
 
-func (s *synchronizedStore) Unmount(opts dcowfs.CacheMountOptions) (imageID string, newImage bool, err error) {
+func (s *synchronizedStore) Unmount(opts layerfs.MountOptions) (imageID string, newImage bool, err error) {
 	if opts.CacheName == "" || opts.CacheNamespace == "" {
 		return "", false, fmt.Errorf("no cache name or namespace provided")
 	}

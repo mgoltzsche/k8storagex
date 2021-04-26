@@ -1,7 +1,7 @@
 package utils
 
 import (
-	storageapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
+	storageapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

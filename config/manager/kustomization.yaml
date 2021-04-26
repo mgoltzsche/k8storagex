@@ -1,12 +1,18 @@
-namePrefix: storage-
+namePrefix: k8storagex-
 resources:
 - serviceaccount.yaml
 - manager.yaml
 commonLabels:
-  app.kubernetes.io/component: cache-manager
+  app.kubernetes.io/component: k8storagex-manager
 generatorOptions:
   disableNameSuffixHash: true
 configMapGenerator:
-- name: manager-config
-  files:
+- files:
   - controller_manager_config.yaml
+  name: manager-config
+images:
+- name: mgoltzsche/k8storagex-controller-manager
+  newName: docker.io/mgoltzsche/k8storagex-controller-manager
+  newTag: latest
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization

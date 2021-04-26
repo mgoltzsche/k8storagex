@@ -2,8 +2,8 @@ resources:
 # It should be run by config/default
 # since it depends on service name and namespace that are out of this kustomize package.
 # This kustomization.yaml is not intended to be run by itself,
-- bases/cache-provisioner.mgoltzsche.github.com_caches.yaml
-- bases/cache-provisioner.mgoltzsche.github.com_storageprovisioners.yaml
+- bases/k8storagex.mgoltzsche.github.com_caches.yaml
+- bases/k8storagex.mgoltzsche.github.com_storageprovisioners.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

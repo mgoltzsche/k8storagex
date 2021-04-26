@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"github.com/mgoltzsche/cache-provisioner/internal/utils"
+	"github.com/mgoltzsche/k8storagex/internal/utils"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,8 +39,8 @@ import (
 
 const (
 	deprovisioner             = "deprovisioner"
-	annPVName                 = "cache-provisioner.mgoltzsche.github.com/pv-name"
-	annPVDisableDeprovisioner = "cache-provisioner.mgoltzsche.github.com/pv-deprovisioner-disabled"
+	annPVName                 = "k8storagex.mgoltzsche.github.com/pv-name"
+	annPVDisableDeprovisioner = "k8storagex.mgoltzsche.github.com/pv-deprovisioner-disabled"
 )
 
 // PersistentVolumeReconciler reconciles a Cache object
@@ -221,6 +221,8 @@ func (r *PersistentVolumeReconciler) deprovisionVolume(ctx context.Context, pv *
 			if err != nil {
 				return nil, err
 			}
+
+			r.recorder.Event(pv, corev1.EventTypeNormal, "Deprovisioning", "Deprovisioning PersistentVolume")
 
 			return pod, nil
 		},

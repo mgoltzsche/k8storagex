@@ -1,9 +1,10 @@
-# cache-provisioner
+# Extensible Kubernetes storage provisioners
 
-A simple, fast and scalable cache for distributed (build) jobs (early development).  
+A host directory and cache provisioner for Kubernetes.  
 
-Manages distributed, layered, Copy-On-Write cache file systems as containers and provisions them as `PersistentVolumes` (PV) in Kubernetes.
-[rancher/local-path-provisioner](https://github.com/rancher/local-path-provisioner) is configured with a custom helper Pod to set up and commit a [buildah](https://github.com/containers/buildah) container as `hostpath` PV (soon also synchronizing with a docker registry).
+It provides a simple, fast and scalable caching solution for distributed (build) jobs using containers as layered, Copy-on-Write cache file systems that can be provisioned as `PersistentVolumes`.  
+
+Formerly known as "cache-provisioner".
 
 ## Motivation
 
@@ -69,32 +70,30 @@ make generate manifests static-manifests
 ### Build
 Build binaries:
 ```sh
-make dcowfs manager
+make layerfs manager
 ```
 
 ### Test
-Test dcowfs binary:
+Test layerfs binary:
 ```sh
-make test-dcowfs
-```
-
-### Load images into kind cluster
-In order to test this component locally the images can be built and loaded into kind:
-```sh
-make kind-load-images
+make test-layerfs
 ```
 
 ### Deploy
-The default configuration is known to work with [kind](https://github.com/kubernetes-sigs/kind) (`kind create cluster`) and [minikube](https://github.com/kubernetes/minikube) (`minikube start`) but should work with other clusters as well.  
 
-Deploy to a Kubernetes cluster (using [kpt](https://github.com/GoogleContainerTools/kpt): `kpt live apply config/static`):
+Deploy to a local Kubernetes cluster (using [kpt](https://github.com/GoogleContainerTools/kpt): `kpt live apply config/static/*`):
 ```sh
-make deploy
+make deploy-$TARGET
 ```
 Undeploy:
 ```sh
-make undeploy
+make undeploy-$TARGET
 ```
+where `$TARGET` can be one of:
+* `default` - manager and provisioners without registry, pulling public images
+* `registry` - manager, provisioners and registry, pulling public images
+* `minikube` - like `registry` but builds and deploys the local changes to minikube
+* `kind` - like `registry` but builds and deploys the local changes to kind
 
 ## Example
 

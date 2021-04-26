@@ -1,4 +1,4 @@
-module github.com/mgoltzsche/cache-provisioner
+module github.com/mgoltzsche/k8storagex
 
 go 1.14
 

@@ -4,7 +4,7 @@ metadata:
   name: cache-editor-role
 rules:
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
+  - k8storagex.mgoltzsche.github.com
   resources:
   - caches
   verbs:
@@ -16,7 +16,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache-provisioner.mgoltzsche.github.com
+  - k8storagex.mgoltzsche.github.com
   resources:
   - caches/status
   verbs:

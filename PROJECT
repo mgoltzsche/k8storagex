@@ -1,10 +1,10 @@
-domain: cache-provisioner.mgoltzsche.github.com
+domain: k8storagex.mgoltzsche.github.com
 layout: go.kubebuilder.io/v3
 projectName: operator
-repo: github.com/mgoltzsche/cache-provisioner
+repo: github.com/mgoltzsche/k8storagex
 resources:
 - crdVersion: v1
-  group: cache-provisioner.mgoltzsche.github.com
+  group: k8storagex.mgoltzsche.github.com
   kind: Cache
   version: v1alpha1
 version: 3-alpha

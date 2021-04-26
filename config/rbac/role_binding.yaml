@@ -8,5 +8,5 @@ roleRef:
   name: manager-role
 subjects:
 - kind: ServiceAccount
-  name: storage-manager
-  namespace: cache-storage
+  name: k8storagex-manager
+  namespace: k8storagex

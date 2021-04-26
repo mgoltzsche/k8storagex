@@ -25,7 +25,7 @@ const (
 	CachePhaseReject      CachePhase = "reject"
 	VolumePhaseMount                 = "mount"
 	VolumePhaseCommit                = "commit"
-	CacheFinalizer                   = "cache-provisioner.mgoltzsche.github.com/finalizer"
+	CacheFinalizer                   = "k8storagex.mgoltzsche.github.com/finalizer"
 	ConditionStorageReset            = "StorageReset"
 	ConditionPodsCleared             = "PodsCleared"
 )

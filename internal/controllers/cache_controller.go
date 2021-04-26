@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	cacheapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
-	"github.com/mgoltzsche/cache-provisioner/internal/utils"
+	cacheapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
+	"github.com/mgoltzsche/k8storagex/internal/utils"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -35,8 +35,8 @@ import (
 )
 
 const (
-	annCacheName      = "cache-provisioner.mgoltzsche.github.com/cache-name"
-	annCacheNamespace = "cache-provisioner.mgoltzsche.github.com/cache-namespace"
+	annCacheName      = "k8storagex.mgoltzsche.github.com/cache-name"
+	annCacheNamespace = "k8storagex.mgoltzsche.github.com/cache-namespace"
 )
 
 // CacheReconciler reconciles a Cache object
@@ -60,9 +60,9 @@ func (r *CacheReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;create;watch
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;create;watch
-// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com,resources=caches,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com,resources=caches/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=cache-provisioner.mgoltzsche.github.com,resources=caches/finalizers,verbs=update
+// +kubebuilder:rbac:groups=k8storagex.mgoltzsche.github.com,resources=caches,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=k8storagex.mgoltzsche.github.com,resources=caches/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=k8storagex.mgoltzsche.github.com,resources=caches/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

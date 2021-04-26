@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	cacheapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
+	cacheapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	kerr "k8s.io/apimachinery/pkg/api/errors"

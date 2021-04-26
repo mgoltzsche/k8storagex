@@ -13,9 +13,9 @@ import (
 	"github.com/containers/image/v5/types"
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/unshare"
-	cacheapi "github.com/mgoltzsche/cache-provisioner/api/v1alpha1"
-	"github.com/mgoltzsche/cache-provisioner/internal/dcowfs"
-	"github.com/mgoltzsche/cache-provisioner/internal/ksync"
+	cacheapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
+	"github.com/mgoltzsche/k8storagex/internal/ksync"
+	"github.com/mgoltzsche/k8storagex/internal/layerfs"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	mountOptions = dcowfs.CacheMountOptions{
+	mountOptions = layerfs.MountOptions{
 		Context:        newContext(),
 		CacheName:      os.Getenv(envCacheName),
 		CacheNamespace: os.Getenv(envCacheNamespace),
@@ -57,7 +57,7 @@ func validateOptions(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func applyDefaults(o *dcowfs.CacheMountOptions) {
+func applyDefaults(o *layerfs.MountOptions) {
 	if o.CacheNamespace == "" {
 		o.CacheNamespace = "default"
 	}
@@ -81,7 +81,7 @@ func newContext() context.Context {
 	return ctx
 }
 
-func newStore() (r dcowfs.Store, err error) {
+func newStore() (r layerfs.Store, err error) {
 	opts, err := storage.DefaultStoreOptions(unshare.IsRootless(), unshare.GetRootlessUID())
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func newStore() (r dcowfs.Store, err error) {
 			Password: registryPasswordFlag,
 		}
 	}
-	r = dcowfs.New(store, systemContext, logrus.NewEntry(logrus.StandardLogger()))
+	r = layerfs.New(store, systemContext, logrus.NewEntry(logrus.StandardLogger()))
 	if enableK8sSyncFlag {
 		r, err = toClusterSyncedStore(r)
 		if err != nil {
@@ -127,7 +127,7 @@ func newStore() (r dcowfs.Store, err error) {
 	return r, nil
 }
 
-func toClusterSyncedStore(store dcowfs.Store) (dcowfs.Store, error) {
+func toClusterSyncedStore(store layerfs.Store) (layerfs.Store, error) {
 	if nodeNameFlag == "" {
 		return nil, fmt.Errorf("node name has not been specified")
 	}

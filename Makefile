@@ -1,10 +1,10 @@
 # Current Operator version
-VERSION ?= 0.0.0-dev
+VERSION ?= latest
 # Image registry used for all images
-IMAGE_REGISTRY ?= localhost
+IMAGE_REGISTRY ?= docker.io
 
 # Default bundle image tag
-BUNDLE_IMG ?= $(IMAGE_REGISTRY)/cache-manager-bundle:$(VERSION)
+BUNDLE_IMG ?= $(IMAGE_REGISTRY)/k8storagex-manager-bundle:$(VERSION)
 # Options for 'bundle-build'
 ifneq ($(origin CHANNELS), undefined)
 BUNDLE_CHANNELS := --channels=$(CHANNELS)
@@ -15,8 +15,8 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Image URL to use all building/pushing image targets
-MANAGER_IMG_NAME ?= mgoltzsche/cache-manager
-MANAGER_IMG := $(IMAGE_REGISTRY)/$(MANAGER_IMG_NAME):$(VERSION)
+MANAGER_IMG_NAME ?= mgoltzsche/k8storagex-controller-manager
+MANAGER_IMG = $(IMAGE_REGISTRY)/$(MANAGER_IMG_NAME):$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -29,6 +29,7 @@ endif
 
 BUILD_DIR := $(shell pwd)/build
 BIN_DIR := $(BUILD_DIR)/bin
+DEV_MANIFEST_DIR := $(BUILD_DIR)/dev-manifests
 
 BATS_DIR = $(BUILD_DIR)/tools/bats
 BATS = $(BIN_DIR)/bats
@@ -36,72 +37,85 @@ KPT = $(BIN_DIR)/kpt
 
 MANAGER_BUILD_TAGS ?=
 
-DCOWFS_IMG_NAME ?= mgoltzsche/dcowfs
-DCOWFS_IMG := $(IMAGE_REGISTRY)/$(DCOWFS_IMG_NAME):$(VERSION)
-DCOWFS_BUILD_TAGS ?= exclude_graphdriver_devicemapper exclude_graphdriver_btrfs btrfs_noversion containers_image_ostree_stub containers_image_openpgp
+LAYERFS_IMG_NAME ?= mgoltzsche/k8storagex-layerfs
+LAYERFS_IMG = $(IMAGE_REGISTRY)/$(LAYERFS_IMG_NAME):$(VERSION)
+LAYERFS_BUILD_TAGS ?= exclude_graphdriver_devicemapper exclude_graphdriver_btrfs btrfs_noversion containers_image_ostree_stub containers_image_openpgp
 
-BUILD_TAGS ?= $(DCOWFS_BUILD_TAGS) $(MANAGER_BUILD_TAGS)
+BUILD_TAGS ?= $(LAYERFS_BUILD_TAGS) $(MANAGER_BUILD_TAGS)
 
 STATIC_MANIFESTS = default registry
 DEPLOY_TARGETS = $(addprefix deploy-,$(STATIC_MANIFESTS))
 UNDEPLOY_TARGETS = $(addprefix undeploy-,$(STATIC_MANIFESTS))
 
 
-all: manager dcowfs
+all: layerfs manager
 
-deploy-minikube: minikube-load-images deploy-registry
+# Deploy local changes to minikube or kind cluster
+deploy-kind: kind-export-kubeconfig
+deploy-minikube deploy-kind: IMAGE_REGISTRY=localhost
+deploy-minikube deploy-kind: deploy-%: images dev-manifests | $(KPT)
+	$(eval MANAGER_SHA=$(shell docker images --filter=reference=$(MANAGER_IMG) --format "{{.ID}}"))
+	$(eval LAYERFS_SHA=$(shell docker images --filter=reference=$(LAYERFS_IMG) --format "{{.ID}}"))
+	docker tag $(MANAGER_IMG) $(MANAGER_IMG)-$(MANAGER_SHA)
+	docker tag $(LAYERFS_IMG) $(LAYERFS_IMG)-$(LAYERFS_SHA)
+	make $*-load-images MANAGER_IMG=$(MANAGER_IMG)-$(MANAGER_SHA) LAYERFS_IMG=$(LAYERFS_IMG)-$(LAYERFS_SHA)
+	$(KPT) cfg set $(DEV_MANIFEST_DIR) manager-image $(MANAGER_IMG)-$(MANAGER_SHA)
+	$(KPT) cfg set $(DEV_MANIFEST_DIR) provisioner-image $(LAYERFS_IMG)-$(LAYERFS_SHA)
+	$(KPT) live apply $(DEV_MANIFEST_DIR)
+	$(KPT) live status --poll-until=current --timeout=60s $(DEV_MANIFEST_DIR)
+
+undeploy-minikube: undeploy-registry
 
 $(DEPLOY_TARGETS): deploy-%:
-	kpt live apply config/static/$*
+	$(KPT) live apply config/static/$*
+	$(KPT) live status --poll-until=current --timeout=90s config/static/$*
 
 $(UNDEPLOY_TARGETS): undeploy-%:
-	kpt live destroy config/static/$*
-
-install-buildah: legacy-helper-image
-	CID=`docker create local/buildah-helper` && \
-	docker cp $$CID:/usr/bin/buildah /usr/local/bin/buildah; \
-	STATUS=$$?; \
-	docker rm $$CID; \
-	exit $$STATUS
-
-legacy-helper-image:
-	docker build -t local/buildah-helper -f helper/Dockerfile helper
+	$(KPT) live status --poll-until=deleted --timeout=60s config/static/$* & \
+	$(KPT) live destroy config/static/$* && wait
 
 # Run tests
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: generate fmt vet manifests
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test -tags "$(BUILD_TAGS)" ./... -coverprofile build/cover.out
+	go test -tags "$(BUILD_TAGS)" ./... -coverprofile build/cover.out
 
-# Build dcowfs binary
-dcowfs: fmt vet
-	go build -o build/bin/dcowfs -tags "$(BUILD_TAGS)" ./cmd/dcowfs
+# Build layerfs binary
+layerfs: fmt vet
+	go build -o build/bin/layerfs -tags "$(BUILD_TAGS)" ./cmd/layerfs
 
-dcowfs-image:
-	docker build -t $(DCOWFS_IMG) -f Dockerfile-dcowfs .
+layerfs-image:
+	docker build -t $(LAYERFS_IMG) -f Dockerfile-layerfs .
 
-test-e2e: test-dcowfs test-operator
+release: check-version all test images static-manifests kind-create kind-load-images deploy-registry test-e2e kind-delete docker-push
 
-test-dcowfs: dcowfs-image $(BATS)
+check-version:
+	@! test "$(VERSION)" = latest || (echo no VERSION specified >&2; false)
+
+test-e2e-kind: kind-create deploy-kind test-e2e kind-delete
+
+test-e2e: test-layerfs test-manager
+
+test-layerfs: layerfs-image $(BATS)
 	export PATH="$(BIN_DIR):$$PATH"; \
-	IMAGE=${DCOWFS_IMG} ./e2e/dcowfs/run-tests.sh
+	IMAGE=${LAYERFS_IMG} ./e2e/layerfs/run-tests.sh
 
-test-operator: $(BATS)
-	@printf '\nRUNNING OPERATOR E2E TESTS...\n\n'
-	#kubectl wait --for condition=available --timeout 60s -n cache-storage deploy/cache-pvc-remover-controller-manager deploy/cache-local-path-provisioner
+test-manager: $(BATS)
+	@printf '\nRUNNING MANAGER E2E TESTS...\n\n'
+	kubectl -n k8storagex wait --for condition=Ready --timeout=60s imagepushsecret/cache-registry
 	set -e; \
 	export NAMESPACE=storage-testns-`date +'%Y%m%d%H%M%S'` PATH="$(BIN_DIR):$$PATH"; \
 	kubectl create namespace $$NAMESPACE; \
 	echo; \
 	STATUS=0; \
-	$(BATS) -T ./e2e/operator || STATUS=1; \
+	$(BATS) -T ./e2e/manager || STATUS=1; \
 	kubectl delete namespace $$NAMESPACE; \
 	exit $$STATUS
 
-clean:
+clean: clean-test-storage
 	rm -rf build
-	docker run --rm --privileged -v `pwd`/e2e/dcowfs:/data alpine:3.12 /bin/sh -c ' \
+
+clean-test-storage:
+	docker run --rm --privileged -v `pwd`/e2e/layerfs:/data alpine:3.12 /bin/sh -c ' \
 		umount /data/testmount/*; \
 		umount /data/testmount/.cache/overlay; \
 		umount /data/testmount/.cache/aufs; \
@@ -115,18 +129,36 @@ manager: generate fmt vet
 run: generate fmt vet manifests
 	go run ./cmd/manager/main.go
 
-static-manifests: manifests | $(KPT)
+static-manifests: manifests set-kustomization-images | $(KPT)
 	$(KPT) fn run --network config
 	for MANIFEST in default registry; do \
 		rm -f config/static/$$MANIFEST/Kptfile; \
-		$(KPT) pkg init config/static/$$MANIFEST --name storage-provisioner-manager-$$MANIFEST; \
-		$(KPT) cfg create-setter config/static/$$MANIFEST manager-image $(MANAGER_IMG_NAME):latest --field="image"; \
-		$(KPT) cfg create-setter config/static/$$MANIFEST provisioner-image $(DCOWFS_IMG_NAME):latest --field="image"; \
+		$(KPT) pkg init config/static/$$MANIFEST --name k8storagex-$$MANIFEST; \
+		$(KPT) cfg create-setter config/static/$$MANIFEST manager-image $(MANAGER_IMG) --field="image"; \
+		$(KPT) cfg create-setter config/static/$$MANIFEST provisioner-image $(LAYERFS_IMG) --field="image"; \
 	done
 
 # Generate manifests e.g. CRD, RBAC etc.
-manifests: controller-gen
+manifests: controller-gen kustomize
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+dev-manifests:
+	rm -rf $(DEV_MANIFEST_DIR)
+	mkdir -p `dirname $(DEV_MANIFEST_DIR)`
+	cp -r config/static/registry $(DEV_MANIFEST_DIR)
+
+set-kustomization-images:
+	cd config/manager && \
+	$(KUSTOMIZE) edit set image $(MANAGER_IMG_NAME)=$(MANAGER_IMG)
+	cd config/provisioners/cache && \
+	$(KUSTOMIZE) edit set image $(LAYERFS_IMG_NAME)=$(LAYERFS_IMG)
+
+check-repo-unchanged:
+	@[ -z "`git status --untracked-files=no --porcelain`" ] || (\
+		echo 'ERROR: the build changed files tracked by git:'; \
+		git status --untracked-files=no --porcelain | sed -E 's/^/  /'; \
+		echo 'Please call `make static-manifests` and commit the resulting changes.'; \
+		false) >&2
 
 # Run go fmt against code
 fmt:
@@ -134,38 +166,37 @@ fmt:
 	go fmt ./internal/...
 
 # Run go vet against code
-vet:
+vet: clean-test-storage
 	go vet -tags "$(BUILD_TAGS)" ./...
 
 # Generate code
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
+images: manager-image layerfs-image
+
 # Build the manager docker image
 manager-image:
 	docker build -t ${MANAGER_IMG} .
 
-# Push the docker image
+# Push the docker images
 docker-push:
 	docker push ${MANAGER_IMG}
-
-kind-load-images: dcowfs-image docker-build
-	kind load docker-image ${MANAGER_IMG}
-	kind load docker-image ${DCOWFS_IMG}
+	docker push ${LAYERFS_IMG}
 
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(shell pwd)/build/bin/controller-gen
-controller-gen:
+controller-gen: clean-test-storage
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
 # Download kustomize locally if necessary
 KUSTOMIZE = $(shell pwd)/build/bin/kustomize
 kustomize:
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@v4.1.2)
 
 kpt: $(KPT)
 $(KPT):
-	$(call download-bin,$(KPT),"https://github.com/GoogleContainerTools/kpt/releases/download/v0.39.0/kpt_$$(uname | tr '[:upper:]' '[:lower:]')_amd64")
+	$(call download-bin,$(KPT),"https://github.com/GoogleContainerTools/kpt/releases/download/v0.39.2/kpt_$$(uname | tr '[:upper:]' '[:lower:]')_amd64")
 
 $(BATS):
 	@echo Downloading bats
@@ -220,14 +251,24 @@ bundle-build:
 	docker build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
 minikube-start:
-	minikube start --kubernetes-version=1.20.5 --network-plugin=cni --enable-default-cni --container-runtime=cri-o --bootstrapper=kubeadm
+	minikube start --kubernetes-version=1.20.5
 
-minikube-load-images: manager-image dcowfs-image | $(KPT)
-	$(eval MANAGER_SHA=$(shell docker images --filter=reference=$(MANAGER_IMG) --format "{{.ID}}"))
-	$(eval DCOWFS_SHA=$(shell docker images --filter=reference=$(DCOWFS_IMG) --format "{{.ID}}"))
-	docker tag $(MANAGER_IMG) $(MANAGER_IMG)-$(MANAGER_SHA)
-	docker tag $(DCOWFS_IMG) $(DCOWFS_IMG)-$(DCOWFS_SHA)
-	minikube image load $(MANAGER_IMG)-$(MANAGER_SHA)
-	minikube image load $(DCOWFS_IMG)-$(DCOWFS_SHA)
-	$(KPT) cfg set config/static/registry manager-image $(MANAGER_IMG)-$(MANAGER_SHA)
-	$(KPT) cfg set config/static/registry provisioner-image $(DCOWFS_IMG)-$(DCOWFS_SHA)
+minikube-delete:
+	minikube delete --purge
+
+minikube-load-images:
+	minikube image load $(MANAGER_IMG)
+	minikube image load $(LAYERFS_IMG)
+
+kind-create:
+	kind create cluster
+
+kind-delete:
+	kind delete cluster
+
+kind-load-images:
+	kind load docker-image $(MANAGER_IMG)
+	kind load docker-image $(LAYERFS_IMG)
+
+kind-export-kubeconfig:
+	kind export kubeconfig
