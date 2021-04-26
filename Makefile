@@ -52,7 +52,7 @@ all: layerfs manager
 
 # Deploy local changes to minikube or kind cluster
 deploy-kind: kind-export-kubeconfig
-deploy-minikube deploy-kind: IMAGE_REGISTRY=localhost
+deploy-minikube: IMAGE_REGISTRY=localhost
 deploy-minikube deploy-kind: deploy-%: images dev-manifests | $(KPT)
 	$(eval MANAGER_SHA=$(shell docker images --filter=reference=$(MANAGER_IMG) --format "{{.ID}}"))
 	$(eval LAYERFS_SHA=$(shell docker images --filter=reference=$(LAYERFS_IMG) --format "{{.ID}}"))
