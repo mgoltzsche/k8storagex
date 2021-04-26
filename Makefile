@@ -1,5 +1,5 @@
 # Current Operator version
-VERSION ?= latest
+VERSION ?= $(shell cat VERSION)
 # Image registry used for all images
 IMAGE_REGISTRY ?= docker.io
 
@@ -86,10 +86,13 @@ layerfs: fmt vet
 layerfs-image:
 	docker build -t $(LAYERFS_IMG) -f Dockerfile-layerfs .
 
-release: check-version all test images static-manifests kind-create kind-load-images deploy-registry test-e2e kind-delete docker-push
+release: check-release-version all test images static-manifests kind-create kind-load-images deploy-registry test-e2e kind-delete docker-push update-release-version
 
-check-version:
-	@! test "$(VERSION)" = latest || (echo no VERSION specified >&2; false)
+check-release-version:
+	@! test "$(VERSION)" = `cat VERSION` || (echo no release VERSION specified >&2; false)
+
+update-release-version:
+	echo "$(VERSION)" > VERSION
 
 test-e2e-kind: kind-create deploy-kind test-e2e kind-delete
 
