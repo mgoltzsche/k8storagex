@@ -11,7 +11,7 @@ printInfo() {
 
 runTestPod() {
 	kubectl -n $NAMESPACE apply -f $BATS_TEST_DIRNAME/${1}-job.yaml
-	kubectl -n $NAMESPACE wait --for condition=complete --timeout=30s job/${1}-job || (printInfo $1; false)
+	kubectl -n $NAMESPACE wait --for condition=complete --timeout=60s job/${1}-job || (printInfo $1; false)
 }
 
 runTestPodAndWaitForPVCDeletion() {
