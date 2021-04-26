@@ -61,13 +61,13 @@ deploy-minikube deploy-kind: deploy-%: images dev-manifests | $(KPT)
 	make $*-load-images MANAGER_IMG=$(MANAGER_IMG)-$(MANAGER_SHA) LAYERFS_IMG=$(LAYERFS_IMG)-$(LAYERFS_SHA)
 	$(KPT) cfg set $(DEV_MANIFEST_DIR) manager-image $(MANAGER_IMG)-$(MANAGER_SHA)
 	$(KPT) cfg set $(DEV_MANIFEST_DIR) provisioner-image $(LAYERFS_IMG)-$(LAYERFS_SHA)
-	$(KPT) live apply $(DEV_MANIFEST_DIR)
+	$(KPT) live apply --server-side $(DEV_MANIFEST_DIR)
 	$(KPT) live status --poll-until=current --timeout=60s $(DEV_MANIFEST_DIR)
 
 undeploy-minikube: undeploy-registry
 
 $(DEPLOY_TARGETS): deploy-%:
-	$(KPT) live apply config/static/$*
+	$(KPT) live apply --server-side config/static/$*
 	$(KPT) live status --poll-until=current --timeout=90s config/static/$*
 
 $(UNDEPLOY_TARGETS): undeploy-%:

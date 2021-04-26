@@ -160,7 +160,7 @@ func (r *PersistentVolumeReconciler) canDeprovision(ctx context.Context, pv *cor
 		}
 
 		// Remove claimRef
-		r.setClaimRefAnnotation(pv, pv.Spec.ClaimRef, log)
+		r.setClaimRefAnnotation(pv, pv.Spec.ClaimRef)
 		pv.Spec.ClaimRef = nil
 		err = r.Client.Update(ctx, pv)
 		if err != nil {
@@ -256,7 +256,7 @@ func (r *PersistentVolumeReconciler) event(pv *corev1.PersistentVolume, evtType,
 	}
 }
 
-func (r *PersistentVolumeReconciler) setClaimRefAnnotation(pv *corev1.PersistentVolume, claim *corev1.ObjectReference, log logr.Logger) {
+func (r *PersistentVolumeReconciler) setClaimRefAnnotation(pv *corev1.PersistentVolume, claim *corev1.ObjectReference) {
 	b, err := json.Marshal(claim)
 	if err != nil {
 		r.Log.WithValues("persistentvolume", pv.Name).

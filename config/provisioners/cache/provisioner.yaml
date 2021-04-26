@@ -26,6 +26,7 @@ spec:
         layerfs umount "$$VOLUME_DIR" --commit
   podTemplate:
     nodeName: "${STORAGE_NODE_NAME}"
+    hostPID: true
     serviceAccount: k8storagex-manager
     containers:
     - name: main
@@ -33,7 +34,6 @@ spec:
       imagePullPolicy: IfNotPresent
       securityContext:
         privileged: true
-        hostPID: true
       env:
       - name: VOLUME_DIR
         value: "${STORAGE_NODE_PATH}/${STORAGE_PV_NAME}"

@@ -8203,7 +8203,6 @@ spec:
       imagePullPolicy: IfNotPresent
       name: main
       securityContext:
-        hostPID: true
         privileged: true
       volumeMounts:
       - mountPath: ${STORAGE_NODE_PATH}
@@ -8212,6 +8211,7 @@ spec:
       - mountPath: /registry
         name: registry-config
         readOnly: true
+    hostPID: true
     nodeName: ${STORAGE_NODE_NAME}
     serviceAccount: k8storagex-manager
     volumes:
