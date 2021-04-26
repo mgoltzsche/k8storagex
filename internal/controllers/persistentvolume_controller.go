@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -41,6 +42,7 @@ const (
 	deprovisioner             = "deprovisioner"
 	annPVName                 = "k8storagex.mgoltzsche.github.com/pv-name"
 	annPVDisableDeprovisioner = "k8storagex.mgoltzsche.github.com/pv-deprovisioner-disabled"
+	annPVClaimRef             = "k8storagex.mgoltzsche.github.com/pvc"
 )
 
 // PersistentVolumeReconciler reconciles a Cache object
@@ -121,7 +123,7 @@ func (r *PersistentVolumeReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{}, err
 		}
 		log.Info("Deleted PersistentVolume")
-		r.recorder.Eventf(pv, corev1.EventTypeNormal, "Deprovisioned", "Deprovisioned PersistentVolume")
+		r.event(pv, corev1.EventTypeNormal, "Deprovisioned", "Deprovisioned PersistentVolume")
 		return ctrl.Result{}, nil
 	}
 
@@ -153,7 +155,12 @@ func (r *PersistentVolumeReconciler) canDeprovision(ctx context.Context, pv *cor
 			return false, nil // not managed by known StorageProvisioner
 		}
 
+		if pv.Spec.ClaimRef == nil {
+			return true, nil // no claim associated - can be deprovisioned
+		}
+
 		// Remove claimRef
+		r.setClaimRefAnnotation(pv, pv.Spec.ClaimRef, log)
 		pv.Spec.ClaimRef = nil
 		err = r.Client.Update(ctx, pv)
 		if err != nil {
@@ -182,14 +189,14 @@ func (r *PersistentVolumeReconciler) deprovisionVolume(ctx context.Context, pv *
 	if provisionerJSON == "" {
 		err := fmt.Errorf("missing annotation %s", annStorageProvisionerSpec)
 		log.Error(err, "Cannot derive deprovisioner for PersistentVolume")
-		r.recorder.Eventf(pv, corev1.EventTypeWarning, "DeprovisionerSpecAnnotationMissing", err.Error())
-		return true, nil
+		r.event(pv, corev1.EventTypeWarning, "DeprovisionerSpecAnnotationMissing", err.Error())
+		return false, nil
 	}
 	provisioner, err := utils.StorageProvisionerFromJSON(provisionerJSON)
 	if err != nil {
 		err = errors.Wrapf(err, "invalid deprovisioner annotation %s on PersistentVolume", annStorageProvisionerSpec)
 		log.Error(err, "Cannot derive deprovisioner from PersistentVolume")
-		r.recorder.Eventf(pv, corev1.EventTypeWarning, "DeprovisionerSpecAnnotationInvalid", err.Error())
+		r.event(pv, corev1.EventTypeWarning, "DeprovisionerSpecAnnotationInvalid", err.Error())
 		return false, nil
 	}
 
@@ -199,12 +206,13 @@ func (r *PersistentVolumeReconciler) deprovisionVolume(ctx context.Context, pv *
 		Name:      utils.ResourceName(pv.Name, deprovisioner),
 		Namespace: r.ManagerNamespace,
 	}
+	needsDeprovisioning := pv.Annotations != nil && pv.Annotations[annPVDisableDeprovisioner] != "true"
 	done, err = r.jobReconciler.ReconcileJob(utils.JobRequest{
 		Context:   ctx,
 		Name:      deprovisioner,
 		PodName:   podName,
 		Owner:     pv,
-		ShouldRun: pv.Annotations != nil && pv.Annotations[annPVDisableDeprovisioner] != "true",
+		ShouldRun: needsDeprovisioning,
 		Create: func() (*corev1.Pod, error) {
 			env, err := utils.AnnotationsToEnv(pv, provisioner.Spec.Env)
 			if err != nil {
@@ -222,17 +230,13 @@ func (r *PersistentVolumeReconciler) deprovisionVolume(ctx context.Context, pv *
 				return nil, err
 			}
 
-			r.recorder.Event(pv, corev1.EventTypeNormal, "Deprovisioning", "Deprovisioning PersistentVolume")
+			r.event(pv, corev1.EventTypeNormal, "Deprovisioning", "Deprovisioning PersistentVolume")
 
 			return pod, nil
 		},
 		OnCompleted: func(_ *corev1.Pod) (done bool, err error) {
 			pv.Annotations[annPVDisableDeprovisioner] = "true"
-			err = r.Client.Update(ctx, pv)
-			if err != nil {
-				return false, err
-			}
-			return true, nil
+			return false, r.Client.Update(ctx, pv)
 		},
 		Log: log,
 	})
@@ -240,9 +244,51 @@ func (r *PersistentVolumeReconciler) deprovisionVolume(ctx context.Context, pv *
 		log = log.WithValues("pod", podName.String())
 		log.Error(err, "Failed to deprovision PersistentVolume")
 		msg := fmt.Sprintf("Failed to deprovision PersistentVolume: %v", err)
-		r.recorder.Eventf(pv, corev1.EventTypeWarning, "DeprovisionerFailed", msg)
+		r.event(pv, corev1.EventTypeWarning, "DeprovisionerFailed", msg)
 	}
 	return done, err
+}
+
+func (r *PersistentVolumeReconciler) event(pv *corev1.PersistentVolume, evtType, reason, message string) {
+	r.recorder.Eventf(pv, evtType, reason, message)
+	if claimRef := r.getClaimRef(pv); claimRef != nil {
+		r.recorder.Eventf(claimRef, evtType, reason, message)
+	}
+}
+
+func (r *PersistentVolumeReconciler) setClaimRefAnnotation(pv *corev1.PersistentVolume, claim *corev1.ObjectReference, log logr.Logger) {
+	b, err := json.Marshal(claim)
+	if err != nil {
+		r.Log.WithValues("persistentvolume", pv.Name).
+			Error(err, "Failed to marshal claimRef")
+		return
+	}
+	if pv.Annotations == nil {
+		pv.Annotations = map[string]string{}
+	}
+	pv.Annotations[annPVClaimRef] = string(b)
+}
+
+func (r *PersistentVolumeReconciler) getClaimRef(pv *corev1.PersistentVolume) *corev1.ObjectReference {
+	if pv.Spec.ClaimRef != nil {
+		return pv.Spec.ClaimRef
+	}
+	if pv.Annotations == nil {
+		return nil
+	}
+
+	claimRefJSON := pv.Annotations[annPVClaimRef]
+	if claimRefJSON == "" {
+		return nil
+	}
+	claimRef := &corev1.ObjectReference{}
+	err := json.Unmarshal([]byte(claimRefJSON), claimRef)
+	if err != nil {
+		r.Log.WithValues("persistentvolume", pv.Name).
+			Error(err, "Failed to unmarshal claimRef from annotation")
+		return nil
+	}
+	return claimRef
 }
 
 func hostPathFromPV(pv *corev1.PersistentVolume) string {
