@@ -10,9 +10,9 @@ openAPI:
       x-k8s-cli:
         setter:
           name: manager-image
-          value: docker.io/mgoltzsche/k8storagex-controller-manager:latest
+          value: docker.io/mgoltzsche/k8storagex-controller-manager:0.1.0
     io.k8s.cli.setters.provisioner-image:
       x-k8s-cli:
         setter:
           name: provisioner-image
-          value: docker.io/mgoltzsche/k8storagex-layerfs:latest
+          value: docker.io/mgoltzsche/k8storagex-layerfs:0.1.0

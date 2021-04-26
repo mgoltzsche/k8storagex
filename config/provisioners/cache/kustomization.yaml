@@ -4,6 +4,6 @@ resources:
 images:
 - name: mgoltzsche/k8storagex-layerfs
   newName: docker.io/mgoltzsche/k8storagex-layerfs
-  newTag: latest
+  newTag: 0.1.0
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
