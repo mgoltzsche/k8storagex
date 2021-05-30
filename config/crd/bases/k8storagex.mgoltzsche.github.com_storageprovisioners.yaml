@@ -285,6 +285,8 @@ spec:
                 - deprovisioner
                 - provisioner
                 type: object
+              deprovisionOnPodCompletion:
+                type: boolean
               env:
                 items:
                   description: EnvVar maps an annotation value to an env var that

@@ -17,6 +17,7 @@ rules:
   - persistentvolumeclaims
   verbs:
   - create
+  - delete
   - get
   - list
   - patch
@@ -71,6 +72,12 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
 - apiGroups:
   - k8storagex.mgoltzsche.github.com
   resources:

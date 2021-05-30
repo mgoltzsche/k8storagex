@@ -53,6 +53,9 @@ func NewProvisionerPod(src PodSource) (*corev1.Pod, error) {
 	p.Spec = src.SubstitutedProvisioner.Spec.PodTemplate
 	//p.Spec.NodeName = src.NodeName
 	c := findContainer(p.Spec.Containers, containerName)
+	if c == nil {
+		return nil, errors.Errorf("provisioner %s pod template does not specify container %q", src.SubstitutedProvisioner.Name, containerName)
+	}
 	c.Env = uniqueEnv(append(append(c.Env, container.Env...), src.Env...))
 	if container.Command != nil {
 		c.Command = container.Command

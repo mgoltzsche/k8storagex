@@ -5,7 +5,6 @@ bases:
 - namespace.yaml
 - ../crd
 - ../rbac
-- ../pvc-remover
 - ../manager
 - ../provisioners/cache
 - ../provisioners/host-directory

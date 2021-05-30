@@ -151,6 +151,12 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "StorageProvisioner")
 		os.Exit(1)
 	}
+	err = (&controllers.PodReconciler{
+		Client:       mgr.GetClient(),
+		Log:          ctrl.Log.WithName("controllers").WithName("Pod"),
+		Scheme:       mgr.GetScheme(),
+		Provisioners: provisioners,
+	}).SetupWithManager(mgr)
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("health", healthz.Ping); err != nil {

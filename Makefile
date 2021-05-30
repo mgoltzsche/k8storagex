@@ -50,10 +50,10 @@ UNDEPLOY_TARGETS = $(addprefix undeploy-,$(STATIC_MANIFESTS))
 
 all: layerfs manager
 
-# Deploy local changes to minikube or kind cluster
+# Deploy local changes to kind or minikube cluster
 deploy-kind: kind-export-kubeconfig
-deploy-minikube: IMAGE_REGISTRY=localhost
-deploy-minikube deploy-kind: deploy-%: images dev-manifests | $(KPT)
+deploy-kind deploy-minikube: IMAGE_REGISTRY=localhost
+deploy-kind deploy-minikube: deploy-%: images dev-manifests | $(KPT)
 	$(eval MANAGER_SHA=$(shell docker images --filter=reference=$(MANAGER_IMG) --format "{{.ID}}"))
 	$(eval LAYERFS_SHA=$(shell docker images --filter=reference=$(LAYERFS_IMG) --format "{{.ID}}"))
 	docker tag $(MANAGER_IMG) $(MANAGER_IMG)-$(MANAGER_SHA)
@@ -61,13 +61,13 @@ deploy-minikube deploy-kind: deploy-%: images dev-manifests | $(KPT)
 	make $*-load-images MANAGER_IMG=$(MANAGER_IMG)-$(MANAGER_SHA) LAYERFS_IMG=$(LAYERFS_IMG)-$(LAYERFS_SHA)
 	$(KPT) cfg set $(DEV_MANIFEST_DIR) manager-image $(MANAGER_IMG)-$(MANAGER_SHA)
 	$(KPT) cfg set $(DEV_MANIFEST_DIR) provisioner-image $(LAYERFS_IMG)-$(LAYERFS_SHA)
-	$(KPT) live apply --server-side $(DEV_MANIFEST_DIR)
+	$(KPT) live apply --server-side --force-conflicts $(DEV_MANIFEST_DIR)
 	$(KPT) live status --poll-until=current --timeout=60s $(DEV_MANIFEST_DIR)
 
-undeploy-minikube: undeploy-registry
+undeploy-kind undeploy-minikube: undeploy-registry
 
 $(DEPLOY_TARGETS): deploy-%:
-	$(KPT) live apply --server-side config/static/$*
+	$(KPT) live apply --server-side --force-conflicts config/static/$*
 	$(KPT) live status --poll-until=current --timeout=90s config/static/$*
 
 $(UNDEPLOY_TARGETS): undeploy-%:
@@ -129,8 +129,8 @@ manager: generate fmt vet
 	go build -o build/bin/manager ./cmd/manager
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
-run: generate fmt vet manifests
-	go run ./cmd/manager/main.go
+run:
+	MANAGER_NAMESPACE=k8storagex go run ./cmd/manager/main.go
 
 static-manifests: manifests set-kustomization-images | $(KPT)
 	$(KPT) fn run --network config
@@ -264,7 +264,7 @@ minikube-load-images:
 	minikube image load $(LAYERFS_IMG)
 
 kind-create:
-	kind create cluster
+	kind create cluster --config e2e/kind-config.yaml
 
 kind-delete:
 	kind delete cluster

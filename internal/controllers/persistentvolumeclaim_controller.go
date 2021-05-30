@@ -41,10 +41,12 @@ const (
 	annPVCNamespace           = "k8storagex.mgoltzsche.github.com/pvc-namespace"
 	annStorageProvisioner     = "volume.beta.kubernetes.io/storage-provisioner"
 	annStorageProvisionerSpec = "k8storagex.mgoltzsche.github.com/provisioner-spec"
+	annProvisionedBy          = "pv.kubernetes.io/provisioned-by"
 	annSelectedNode           = "volume.kubernetes.io/selected-node"
 	finalizer                 = "k8storagex.mgoltzsche.github.com/finalizer"
 	finalizerPVProtection     = "kubernetes.io/pv-protection"
 	KeyNode                   = "kubernetes.io/hostname"
+	finalizerPVCProtection    = "kubernetes.io/pvc-protection"
 )
 
 // PersistentVolumeClaimReconciler reconciles a Cache object
@@ -100,6 +102,14 @@ func (r *PersistentVolumeClaimReconciler) Reconcile(ctx context.Context, req ctr
 	}
 
 	if claim.DeletionTimestamp != nil {
+		if utils.HasString(claim.Finalizers, finalizerPVCProtection) {
+			if claim.Annotations[storageapi.AnnotationPersistentVolumeClaimNoProtection] == storageapi.Enabled {
+				// Remove pvc-protection finalizers
+				utils.RemoveString(&claim.Finalizers, finalizerPVCProtection)
+				return ctrl.Result{}, r.Client.Status().Update(ctx, claim)
+			}
+			return ctrl.Result{}, nil
+		}
 		// Clean up pending/failed provisioner Pods and their (partially created) volumes
 		if utils.HasString(claim.Finalizers, finalizer) {
 			if len(claim.Finalizers) != 1 {
@@ -287,6 +297,7 @@ func (r *PersistentVolumeClaimReconciler) persistentVolumeForClaim(claim *corev1
 	pv.Annotations = map[string]string{
 		annStorageProvisioner:     provisioner.Spec.Name,
 		annStorageProvisionerSpec: provisionerJSON,
+		annProvisionedBy:          "k8storagex",
 	}
 	pv.Finalizers = []string{finalizer}
 	if pv.Spec.Capacity == nil {

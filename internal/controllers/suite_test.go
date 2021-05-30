@@ -19,35 +19,48 @@ package controllers
 import (
 	"archive/tar"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
 	goruntime "runtime"
 	"testing"
+	"time"
 
+	storageapi "github.com/mgoltzsche/k8storagex/api/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	cacheprovisionermgoltzschegithubcomv1alpha1 "github.com/mgoltzsche/k8storagex/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
-var cfg *rest.Config
-var k8sClient client.Client
-var testEnv *envtest.Environment
+var (
+	cfg                   *rest.Config
+	k8sClient             client.Client
+	testeeCancelFunc      context.CancelFunc
+	testEnv               *envtest.Environment
+	testNamespace         string
+	testNamespaceResource = &corev1.Namespace{}
+	testProvisioners      = newProvisioners()
+)
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -72,7 +85,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = cacheprovisionermgoltzschegithubcomv1alpha1.AddToScheme(scheme.Scheme)
+	err = storageapi.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	// +kubebuilder:scaffold:scheme
@@ -81,10 +94,44 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(k8sClient).NotTo(BeNil())
 
+	// Set up controller manager
+	mgr, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme:             scheme.Scheme,
+		LeaderElection:     false,
+		MetricsBindAddress: "127.0.0.1:0",
+	})
+	Expect(err).ToNot(HaveOccurred())
+	Expect(mgr).ToNot(BeNil())
+	ctx, cancel := context.WithCancel(context.Background())
+	testeeCancelFunc = cancel
+	go func() {
+		defer GinkgoRecover()
+		err = mgr.Start(ctx)
+		Expect(err).ToNot(HaveOccurred())
+	}()
+
+	// Set up test Namespace and StorageClass
+	Eventually(func() error {
+		testNamespace = fmt.Sprintf("test-namespace-%d", rand.Int63())
+		testNamespaceResource.Name = testNamespace
+		return k8sClient.Create(context.TODO(), testNamespaceResource)
+	}, "10s", "1s").ShouldNot(HaveOccurred())
+
+	// Set up controllers
+	err = (&PodReconciler{
+		Client:       mgr.GetClient(),
+		Log:          ctrl.Log.WithName("controllers").WithName("Pod"),
+		Scheme:       mgr.GetScheme(),
+		Provisioners: testProvisioners,
+	}).SetupWithManager(mgr)
+	Expect(err).ToNot(HaveOccurred())
+
 }, 60)
 
 var _ = AfterSuite(func() {
 	By("tearing down the test environment")
+	testeeCancelFunc()
+	k8sClient.Delete(context.TODO(), testNamespaceResource)
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
@@ -169,4 +216,54 @@ func downloadKubebuilderAssetsIfNotExist(destDir string) error {
 		return err
 	}
 	return os.Rename(tmpDir, destDir)
+}
+
+func verify(o client.Object, fn func(error) error) {
+	Eventually(func() error {
+		defer GinkgoRecover()
+		name := types.NamespacedName{Name: o.GetName(), Namespace: o.GetNamespace()}
+		return fn(k8sClient.Get(context.TODO(), name, o))
+	}, "10s", "1s").ShouldNot(HaveOccurred())
+}
+
+func notAfter(delay time.Duration, fn func(error) error) func(error) error {
+	time.Sleep(delay)
+	return func(err error) error {
+		err = fn(err)
+		if err == nil {
+			return fmt.Errorf("expected error to be returned")
+		}
+		return nil
+	}
+}
+
+func hasBeenDeleted(pvc *corev1.PersistentVolumeClaim) func(error) error {
+	return func(err error) error {
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil
+			}
+			return err
+		}
+		if pvc.Annotations[storageapi.AnnotationPersistentVolumeClaimNoProtection] != storageapi.Enabled {
+			err = fmt.Errorf("PVC has not been annotated. %s", err)
+		}
+		if pvc.GetDeletionTimestamp() == nil {
+			err = fmt.Errorf("PVC has no deletion timestamp")
+		}
+		return err
+	}
+}
+
+func createPVC(name string, provisionerName string) *corev1.PersistentVolumeClaim {
+	pvc := &corev1.PersistentVolumeClaim{}
+	pvc.Name = name
+	pvc.Namespace = testNamespace
+	pvc.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
+	pvc.Spec.Resources.Requests = map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: resource.MustParse("1G")}
+	pvc.Finalizers = []string{finalizerPVCProtection}
+	pvc.Annotations = map[string]string{"volume.beta.kubernetes.io/storage-provisioner": provisionerName}
+	err := k8sClient.Create(context.TODO(), pvc)
+	Expect(err).ShouldNot(HaveOccurred())
+	return pvc
 }

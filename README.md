@@ -95,6 +95,18 @@ where `$TARGET` can be one of:
 * `minikube` - like `registry` but builds and deploys the local changes to minikube
 * `kind` - like `registry` but builds and deploys the local changes to kind
 
+### Run the run the manager binary directly
+
+After deploying the manifests scale down the manager Deployment to 0:
+```sh
+kubectl scale -n k8storagex --replicas=0 deployment/k8storagex-controller-manager
+```
+
+Build and run the binary:
+```sh
+make run
+```
+
 ## Example
 
 Deploy a Pod with a PersistentVolumeClaim that points to a cache named `example-project`:

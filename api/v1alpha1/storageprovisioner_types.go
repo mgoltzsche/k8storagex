@@ -22,7 +22,9 @@ import (
 )
 
 const (
-	ConditionConfigured = "Configured"
+	ConditionConfigured                         = "Configured"
+	AnnotationPersistentVolumeClaimNoProtection = "k8storagex.mgoltzsche.github.com/no-pvc-protection"
+	Enabled                                     = "true"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -30,12 +32,13 @@ const (
 
 // StorageProvisionerSpec defines the desired state of StorageProvisioner
 type StorageProvisionerSpec struct {
-	Name                     string                      `json:"name"`
-	PersistentVolumeTemplate corev1.PersistentVolumeSpec `json:"persistentVolumeTemplate"`
-	PodTemplate              corev1.PodSpec              `json:"podTemplate"`
-	Containers               Containers                  `json:"containers"`
-	Env                      []EnvVar                    `json:"env,omitempty"`
-	Nodes                    []NodePath                  `json:"nodes,omitempty"`
+	Name                       string                      `json:"name"`
+	DeprovisionOnPodCompletion bool                        `json:"deprovisionOnPodCompletion,omitempty"`
+	PersistentVolumeTemplate   corev1.PersistentVolumeSpec `json:"persistentVolumeTemplate"`
+	PodTemplate                corev1.PodSpec              `json:"podTemplate"`
+	Containers                 Containers                  `json:"containers"`
+	Env                        []EnvVar                    `json:"env,omitempty"`
+	Nodes                      []NodePath                  `json:"nodes,omitempty"`
 }
 
 // EnvVar maps an annotation value to an env var that is provided to the de/provisioner Pod
